@@ -1,18 +1,18 @@
 import { Probot } from "probot";
-import { run_acr } from "./run_acr.js";
+import { runAcr } from "./run_acr.js";
 
-const bot_mention = "@code-rover-bot";
+const botMention = "@code-rover-bot";
 
 export default (app: Probot) => {
   app.on("issues.opened", async (context) => {
-    const issue_text = context.payload.issue.body;
-    app.log.info(issue_text);
+    const issueText = context.payload.issue.body;
+    app.log.info(issueText);
 
-    if (issue_text == null) {
+    if (issueText == null) {
       return;
     }
 
-    if (!issue_text.includes(bot_mention)) {
+    if (!issueText.includes(botMention)) {
       return;
     }
 
@@ -21,20 +21,27 @@ export default (app: Probot) => {
     });
     await context.octokit.issues.createComment(issueComment);
 
-    const repo_url = context.payload.repository.clone_url;
+    const issueId = context.payload.issue.id;
+    const issueUrl = context.payload.issue.html_url;
 
-    run_acr(repo_url, issue_text);
+    const repoUrl = context.payload.repository.clone_url;
+    const repoName = context.payload.repository.name;
+
+    runAcr(issueId, repoName, repoUrl, issueText);
   });
 
   app.on("issue_comment.created", async (context) => {
-    const comment_text = context.payload.comment.body;
-    app.log.info(comment_text);
 
-    if (comment_text == null) {
+    console.log("haha")
+
+    const commentText = context.payload.comment.body;
+    app.log.info(commentText);
+
+    if (commentText == null) {
       return;
     }
 
-    if (!comment_text.includes(bot_mention)) {
+    if (!commentText.includes(botMention)) {
       return;
     }
 
@@ -43,14 +50,23 @@ export default (app: Probot) => {
     });
     await context.octokit.issues.createComment(issueComment);
 
-    const issue_text = context.payload.issue.body;
+    const issueText = context.payload.issue.body;
 
-    if (issue_text == null) {
+    if (issueText == null) {
       return;
     }
 
-    const repo_url = context.payload.repository.clone_url;
+    const issueId = context.payload.issue.id;
+    const issueUrl = context.payload.issue.url;
 
-    run_acr(repo_url, issue_text);
+    const issueHtmlUrl = context.payload.issue.html_url;
+
+    const repoUrl = context.payload.repository.clone_url;
+    const repoName = context.payload.repository.name;
+
+    console.log(issueUrl);
+    console.log(issueHtmlUrl);
+
+    runAcr(issueId, repoName, repoUrl, issueText);
   });
 };
