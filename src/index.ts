@@ -21,18 +21,24 @@ export default (app: Probot) => {
     });
     await context.octokit.issues.createComment(issueComment);
 
-    const issueId = context.payload.issue.id;
+    const issueId = context.payload.issue.number;
     const issueUrl = context.payload.issue.html_url;
 
     const repoUrl = context.payload.repository.clone_url;
-    const repoName = context.payload.repository.name;
+    const repoName = context.payload.repository.full_name;
 
-    runAcr(issueId, repoName, repoUrl, issueText);
+    const result = await runAcr(issueId, issueUrl, issueText, repoName, repoUrl);
+
+    const resultComment = context.issue({
+      body: result,
+    });
+    await context.octokit.issues.createComment(resultComment);
   });
 
   app.on("issue_comment.created", async (context) => {
+    // console.log(context.payload);
 
-    console.log("haha")
+    // console.log("haha");
 
     const commentText = context.payload.comment.body;
     app.log.info(commentText);
@@ -45,28 +51,31 @@ export default (app: Probot) => {
       return;
     }
 
-    const issueComment = context.issue({
-      body: "I'm invoked! Going to create a solution for this issue.",
-    });
-    await context.octokit.issues.createComment(issueComment);
+    // const issueComment = context.issue({
+    //   body: "I'm invoked! Going to create a solution for this issue.",
+    // });
+    // await context.octokit.issues.createComment(issueComment);
 
     const issueText = context.payload.issue.body;
 
     if (issueText == null) {
+      console.log("Issue text is null");
       return;
     }
 
-    const issueId = context.payload.issue.id;
-    const issueUrl = context.payload.issue.url;
+    console.log(issueText);
 
-    const issueHtmlUrl = context.payload.issue.html_url;
+    const issueId = context.payload.issue.number;
+    const issueUrl = context.payload.issue.html_url;
 
     const repoUrl = context.payload.repository.clone_url;
-    const repoName = context.payload.repository.name;
+    const repoName = context.payload.repository.full_name;
 
-    console.log(issueUrl);
-    console.log(issueHtmlUrl);
+    const result = await runAcr(issueId, issueUrl, issueText, repoName, repoUrl);
 
-    runAcr(issueId, repoName, repoUrl, issueText);
+    const resultComment = context.issue({
+      body: result,
+    });
+    await context.octokit.issues.createComment(resultComment);
   });
 };
