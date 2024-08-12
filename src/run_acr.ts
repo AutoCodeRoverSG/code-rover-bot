@@ -10,7 +10,6 @@ const OPENAI_KEY = "";
 
 let docker = new Docker();
 
-
 export async function runAcr(
   issueId: number,
   issueUrl: string,
@@ -59,11 +58,6 @@ export async function runAcr(
     "--no-print",
     // omit commit hash -> default branch HEAD will be used
   ];
-
-  // console.log(containerName);
-  // console.log(cmd);
-  // console.log(dockerImageName);
-  // console.log(docker);
 
   const data = await docker.run(dockerImageName, cmd, process.stdout, {
     name: containerName,
