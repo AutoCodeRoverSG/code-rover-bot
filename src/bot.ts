@@ -66,13 +66,27 @@ export const robot = (app: Probot) => {
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    const result = await runAcrGitHubAction(
-      issueId,
-      issueUrl,
-      issueText,
-      repoName,
-      repoUrl
-    );
+    let result;
+    try {
+      result = await runAcrGitHubAction(
+        issueId,
+        issueUrl,
+        issueText,
+        repoName,
+        repoUrl
+      );
+    }
+    catch (error) {
+      console.log(error);
+      result = `Error running ACR GitHub Action ${error}`;
+    }
+    // const result = await runAcrGitHubAction(
+    //   issueId,
+    //   issueUrl,
+    //   issueText,
+    //   repoName,
+    //   repoUrl
+    // );
 
     const resultComment = context.issue({
       body: result,
