@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build-ga": "ncc build src/index_github.cjs --license licenses.txt",
+    "build-ga-new": "esbuild src/index_github.js --bundle --platform=node --outfile=dist/index.js --format=esm --loader:.node=copy",
     "start-ga": "node dist/index.cjs",
     "build": "tsc",
     "start": "probot run ./lib/index.js",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/dockerode": "^3.3.31",
     "@types/node": "^20.14.14",
+    "esbuild": "0.23.0",
     "nock": "^14.0.0-beta.5",
     "smee-client": "^2.0.0",
     "typescript": "^5.5.4",
