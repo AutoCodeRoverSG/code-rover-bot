@@ -12,7 +12,7 @@ runs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip'
+        # cache: 'pip'
 
     - name: Install AutoCodeRover deps
       run: pip install -r ${{ steps.clone-acr.outputs.ACR_REPO }}/requirements.txt && echo "pip install ok"
@@ -21,7 +21,7 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: 'npm'
+        # cache: 'npm'
 
     # - name: Install Bot deps
     #   run: npm ci && echo "npm ci ok"
