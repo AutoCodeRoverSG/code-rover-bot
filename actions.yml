@@ -22,9 +22,9 @@ runs:
         node-version: 20
         cache: 'npm'
 
-    - name: Install Bot deps
-      run: npm ci && echo "npm ci ok"
-      shell: bash
+    # - name: Install Bot deps
+    #   run: npm ci && echo "npm ci ok"
+    #   shell: bash
 
     - name : Running bot
       run: npm run start-ga # TODO: change this to GitHub Action command
