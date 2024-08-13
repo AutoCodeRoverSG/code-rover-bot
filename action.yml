@@ -3,7 +3,7 @@ description: 'Suggest patch or fix location for GitHub issues.'
 
 runs:
   using: "node20"
-  main: "dist/index.js"
+  main: "dist/index.cjs"
 
   # using: 'composite'
   # steps:
