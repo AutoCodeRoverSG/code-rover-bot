@@ -10,23 +10,58 @@ const OPENAI_KEY = "";
 
 let docker = new Docker();
 
-export async function runAcr(
+
+/**
+ * Run ACR as a GitHub action.
+ * This requires running ACR locally (not in its own container),
+ * and uses different repository logic.
+ * Assumptions:
+ * - Using python and pip without conda.
+ * - pip dependencies have already been installed.
+ */
+export async function runAcrGitHubAction(
   issueId: number,
   issueUrl: string,
   issueText: string,
   repoName: string,
   repoUrl: string
 ) {
-  console.log("Going to run ACR on the following issue text:");
-  console.log(issueText);
-  console.log(repoUrl);
+  // console.log("Going to run ACR on the following issue text:");
+  // console.log(issueText);
+  // console.log(repoUrl)
+  const modifiedRepoName = repoName.replace("/", "__");
+
+  const taskId = `${modifiedRepoName}-${issueId}`;
+
+  let rootDir = getRootDir();
+  const localAcrOutputDir = `${rootDir}/acr_output/${taskId}`;
+  if (!fs.existsSync(localAcrOutputDir)) {
+    fs.mkdirSync(localAcrOutputDir, { recursive: true });
+  }
+
+  const acrCodeDir = `${rootDir}/auto-code-rover`;
+  const acrCondaEnv = "auto-code-rover";
+
+
+
+
+
+}
+
+export async function runAcrDocker(
+  issueId: number,
+  issueUrl: string,
+  issueText: string,
+  repoName: string,
+  repoUrl: string
+) {
+  // console.log("Going to run ACR on the following issue text:");
+  // console.log(issueText);
+  // console.log(repoUrl);
 
   const modifiedRepoName = repoName.replace("/", "__");
 
   const taskId = `${modifiedRepoName}-${issueId}`;
-  const containerName = `acr-${taskId}`;
-
-  // create a directory acr_output_{timestamp}, and mount it to the container
 
   let rootDir = getRootDir();
   const localAcrOutputDir = `${rootDir}/acr_output/${taskId}`;
@@ -34,6 +69,8 @@ export async function runAcr(
     fs.mkdirSync(localAcrOutputDir, { recursive: true });
   }
   const dockerOutputDir = `/tmp/acr_output`;
+
+  const containerName = `acr-${taskId}`;
 
   const cmd = [
     "conda",

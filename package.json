@@ -12,11 +12,14 @@
     "probot-app"
   ],
   "scripts": {
+    "build-ga": "ncc build src/index_github.js --license licenses.txt",
+    "start-ga": "node dist/index.js",
     "build": "tsc",
     "start": "probot run ./lib/index.js",
     "test": "vitest"
   },
   "dependencies": {
+    "@probot/adapter-github-actions": "^4.0.0",
     "@vercel/ncc": "^0.38.1",
     "dockerode": "^4.0.2",
     "glob": "^11.0.0",

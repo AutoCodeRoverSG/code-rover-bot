@@ -27,6 +27,7 @@ runs:
       shell: bash
 
     - name : Running bot
-      run: npm start # TODO: change this to GitHub Action command
+      run: npm run start-ga # TODO: change this to GitHub Action command
+      shell: bash
 
   # main: 'dist/index.js'
