@@ -14,7 +14,7 @@
   "scripts": {
     "build-ga": "ncc build src/index_github.cjs --license licenses.txt",
     "build-ga-new": "node build_ga.js",
-    "start-ga": "node dist/index.cjs",
+    "start-ga": "node dist/index.js",
     "build": "tsc",
     "start": "probot run ./lib/index.js",
     "test": "vitest"
