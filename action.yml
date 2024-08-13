@@ -31,7 +31,7 @@ runs:
     #   shell: bash
 
     - name : Running bot
-      run: cd ${{ github.action_path }} && npm run start-ga # TODO: change this to GitHub Action command
+      run: cd ${{ github.action_path }} && npm run start-ga
       shell: bash
 
   # main: 'dist/index.js'

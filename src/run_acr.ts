@@ -6,7 +6,7 @@ import path from "path";
 
 const dockerImageName = "autocoderover/acr:v1";
 
-const OPENAI_KEY = "";
+const OPENAI_KEY = "OPENAI_API_KEY";
 
 let docker = new Docker();
 
@@ -39,13 +39,13 @@ export async function runAcrGitHubAction(
     fs.mkdirSync(localAcrOutputDir, { recursive: true });
   }
 
-  const acrCodeDir = `${rootDir}/auto-code-rover`;
-  const acrCondaEnv = "auto-code-rover";
+  const acrCodeDir = `${rootDir}/acr`;
 
+  const passedOpenaiKey = process.env.OPENAI_API_KEY;
 
+  const targetRepoPath = process.env.TARGET_REPO_PATH;
 
-
-
+  return `Running ACR GitHub Action for ${taskId}. ACR code dir is ${acrCodeDir}, target repo path is ${targetRepoPath}.`;
 }
 
 export async function runAcrDocker(
