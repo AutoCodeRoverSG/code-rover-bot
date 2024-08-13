@@ -28,12 +28,10 @@ export async function runAcrGitHubAction(
   repoName: string,
   repoUrl: string
 ) {
-
   // TODO: The issue text does not contain the issue title??
 
   console.log("Going to run ACR on the following issue text:");
   console.log(issueText);
-
 
   const modifiedRepoName = repoName.replace("/", "__");
 
@@ -64,7 +62,9 @@ export async function runAcrGitHubAction(
 
   const cmd = `python app/main.py local-issue --output-dir ${localAcrOutputDir} --model gpt-4o-2024-05-13 --task-id ${taskId} --local-repo ${targetRepoPath} --issue-file ${issueTextFile}`; // --no-print?
 
-  console.log(`Running ACR GitHub Action with command: ${cmd}, in directory ${acrCodeDir}`);
+  console.log(
+    `Running ACR GitHub Action with command: ${cmd}, in directory ${acrCodeDir}`
+  );
 
   // PYTHONPATH=. python app/main.py local-issue --output-dir output --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id <task id> --local-repo <path to the local project repository> --issue-file <path to the file containing issue description>
 
@@ -77,7 +77,13 @@ export async function runAcrGitHubAction(
   //   console.error(`stderr: ${stderr}`);
   // });
 
-  exec(cmd, { cwd: acrCodeDir });
+  exec(cmd, { cwd: acrCodeDir }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error running ACR GitHub Action: ${error}`);
+    }
+    console.log(`stdout: ${stdout}`);
+    console.error(`stderr: ${stderr}`);
+  });
 
   const failureMessage = "I could not generate a patch for this issue.";
 
