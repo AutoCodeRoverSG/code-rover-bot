@@ -5,7 +5,8 @@ runs:
   using: 'composite'
   steps:
     - name: Clone AutoCodeRover
-      run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "clone ok"
+      id: clone-acr
+      run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "ACR_REPO=${{ github.action_path }}/acr" >> $GITHUB_OUTPUT && echo "clone ok"
       shell: bash
 
     - uses: actions/setup-python@v5
@@ -14,7 +15,7 @@ runs:
         cache: 'pip'
 
     - name: Install AutoCodeRover deps
-      run: pip install -r ${{ github.action_path }}/acr/requirements.txt && echo "pip install ok"
+      run: pip install -r ${{ steps.clone-acr.outputs.ACR_REPO }}/requirements.txt && echo "pip install ok"
       shell: bash
 
     - uses: actions/setup-node@v4
