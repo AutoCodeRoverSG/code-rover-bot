@@ -13,18 +13,24 @@
   ],
   "scripts": {
     "build": "tsc",
-    "start": "probot run ./lib/index.js",
+    "start": "node ./lib/index.js",
+    "build-ga": "node build_ga.js",
+    "start-ga": "node dist/index.js",
     "test": "vitest"
   },
   "dependencies": {
-    "@vercel/ncc": "^0.38.1",
+    "@probot/adapter-github-actions": "^4.0.0",
     "dockerode": "^4.0.2",
     "glob": "^11.0.0",
-    "probot": "^13.0.1"
+    "node-fetch": "^3.3.2",
+    "probot": "^13.0.1",
+    "simple-git": "^3.25.0"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.31",
     "@types/node": "^20.14.14",
+    "@types/node-fetch": "^2.6.11",
+    "esbuild": "0.23.0",
     "nock": "^14.0.0-beta.5",
     "smee-client": "^2.0.0",
     "typescript": "^5.5.4",
