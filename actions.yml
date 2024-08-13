@@ -5,7 +5,7 @@ runs:
   using: 'composite'
   steps:
     - name: Clone AutoCodeRover
-      run: git clone https://github.com/nus-apr/auto-code-rover.git /acr
+      run: git clone https://github.com/nus-apr/auto-code-rover.git /acr && echo "clone ok"
       shell: bash
 
     - uses: actions/setup-python@v5
@@ -14,7 +14,7 @@ runs:
         cache: 'pip'
 
     - name: Install AutoCodeRover deps
-      run: pip install -r /acr/requirements.txt
+      run: pip install -r /acr/requirements.txt && echo "pip install ok"
       shell: bash
 
     - uses: actions/setup-node@v4
@@ -23,7 +23,7 @@ runs:
         cache: 'npm'
 
     - name: Install Bot deps
-      run: npm ci
+      run: npm ci && echo "npm ci ok"
       shell: bash
 
     - name : Running bot
