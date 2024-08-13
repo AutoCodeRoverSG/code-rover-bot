@@ -2,33 +2,36 @@ name: 'AutoCodeRover Bot'
 description: 'Suggest patch or fix location for GitHub issues.'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Clone AutoCodeRover
-      id: clone-acr
-      run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "ACR_REPO=${{ github.action_path }}/acr" >> $GITHUB_OUTPUT && echo "clone ok"
-      shell: bash
+  using: "node20"
+  main: "dist/index.js"
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        # cache: 'pip'
+  # using: 'composite'
+  # steps:
+  #   - name: Clone AutoCodeRover
+  #     id: clone-acr
+  #     run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "ACR_REPO=${{ github.action_path }}/acr" >> $GITHUB_OUTPUT && echo "clone ok"
+  #     shell: bash
 
-    - name: Install AutoCodeRover deps
-      run: pip install -r ${{ steps.clone-acr.outputs.ACR_REPO }}/requirements.txt && echo "pip install ok"
-      shell: bash
+  #   - uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.11'
+  #       # cache: 'pip'
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        # cache: 'npm'
+  #   - name: Install AutoCodeRover deps
+  #     run: pip install -r ${{ steps.clone-acr.outputs.ACR_REPO }}/requirements.txt && echo "pip install ok"
+  #     shell: bash
 
-    # - name: Install Bot deps
-    #   run: npm ci && echo "npm ci ok"
-    #   shell: bash
+  #   - uses: actions/setup-node@v4
+  #     with:
+  #       node-version: 20
+  #       # cache: 'npm'
 
-    - name : Running bot
-      run: cd ${{ github.action_path }} && npm run start-ga # TODO: change this to GitHub Action command
-      shell: bash
+  #   # - name: Install Bot deps
+  #   #   run: npm ci && echo "npm ci ok"
+  #   #   shell: bash
+
+  #   - name : Running bot
+  #     run: cd ${{ github.action_path }} && npm run start-ga # TODO: change this to GitHub Action command
+  #     shell: bash
 
   # main: 'dist/index.js'
