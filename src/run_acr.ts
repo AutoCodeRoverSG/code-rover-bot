@@ -28,6 +28,9 @@ export async function runAcrGitHubAction(
   repoName: string,
   repoUrl: string
 ) {
+
+  // TODO: The issue text does not contain the issue title??
+
   console.log("Going to run ACR on the following issue text:");
   console.log(issueText);
 
@@ -57,9 +60,11 @@ export async function runAcrGitHubAction(
   const issueTextFile = `${localAcrOutputDir}/issue.txt`;
   fs.writeFileSync(issueTextFile, issueText);
 
+  console.log(`Wrote issue text to ${issueTextFile}`);
+
   const cmd = `python app/main.py local-issue --output-dir ${localAcrOutputDir} --model gpt-4o-2024-05-13 --task-id ${taskId} --local-repo ${targetRepoPath} --issue-file ${issueTextFile}`; // --no-print?
 
-  console.log(`Running ACR GitHub Action with command: ${cmd}`);
+  console.log(`Running ACR GitHub Action with command: ${cmd}, in directory ${acrCodeDir}`);
 
   // PYTHONPATH=. python app/main.py local-issue --output-dir output --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id <task id> --local-repo <path to the local project repository> --issue-file <path to the file containing issue description>
 
@@ -77,6 +82,12 @@ export async function runAcrGitHubAction(
   const failureMessage = "I could not generate a patch for this issue.";
 
   // read result
+  const outDirsBeforeFiltering = globSync(`${localAcrOutputDir}/*`);
+  console.log("Printing out dirs before filtering:");
+  for (const dir of outDirsBeforeFiltering) {
+    console.log(dir);
+  }
+
   const realOutputDirs = globSync(`${localAcrOutputDir}/*`).filter((x) =>
     path.basename(x).includes(taskId)
   );
