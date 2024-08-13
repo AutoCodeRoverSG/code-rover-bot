@@ -83,8 +83,8 @@ export async function runAcrGitHubAction(
       cwd: acrCodeDir,
       env: {
         ...process.env,
-        PYTHON_PATH: acrCodeDir,
-        OPENAI_KEY: passedOpenaiKey,
+        "PYTHON_PATH": acrCodeDir,
+        "OPENAI_KEY": passedOpenaiKey,
       },
     },
     (error, stdout, stderr) => {
