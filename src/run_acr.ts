@@ -9,7 +9,7 @@ const dockerImageName = "autocoderover/acr:v1";
 const OPENAI_KEY = "OPENAI_API_KEY";
 
 let docker = new Docker();
-import { exec } from "child_process";
+import { execSync } from "child_process";
 
 // PYTHONPATH=. python app/main.py github-issue --output-dir output --setup-dir setup --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id langchain-20453 --clone-link https://github.com/langchain-ai/langchain.git --commit-hash cb6e5e5 --issue-link https://github.com/langchain-ai/langchain/issues/20453
 
@@ -76,25 +76,40 @@ export async function runAcrGitHubAction(
   //   console.log(`stdout: ${stdout}`);
   //   console.error(`stderr: ${stderr}`);
   // });
-
-  exec(
-    cmd,
-    {
-      cwd: acrCodeDir,
-      env: {
-        ...process.env,
-        "PYTHONPATH": acrCodeDir,
-        "OPENAI_KEY": passedOpenaiKey,
+  try {
+    const stdout = execSync(
+      cmd,
+      {
+        cwd: acrCodeDir,
+        env: {
+          ...process.env,
+          "PYTHONPATH": acrCodeDir,
+          "OPENAI_KEY": passedOpenaiKey,
+        },
+        encoding: 'utf-8',
       },
-    },
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error running ACR GitHub Action: ${error}`);
-      }
-      console.log(`stdout: ${stdout}`);
-      console.error(`stderr: ${stderr}`);
+      // (error, stdout, stderr) => {
+      //   if (error) {
+      //     console.error(`Error running ACR GitHub Action: ${error}`);
+      //   }
+      //   console.log(`stdout: ${stdout}`);
+      //   console.error(`stderr: ${stderr}`);
+      // }
+    );
+    console.log(`Output (stdout): ${stdout}`);
+  }
+  catch (error: any) { // TypeScript requires 'any' to access custom properties
+    console.error(`Error: ${error.message}`);
+
+    if (error.stdout) {
+        console.error(`Captured stdout: ${error.stdout}`);
     }
-  );
+
+    if (error.stderr) {
+        console.error(`Captured stderr: ${error.stderr}`);
+    }
+    return `Error running ACR GitHub Action: ${error.message}`;
+}
 
   const failureMessage = "I could not generate a patch for this issue.";
 
