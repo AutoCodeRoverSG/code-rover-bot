@@ -12,8 +12,8 @@
     "probot-app"
   ],
   "scripts": {
-    "build-ga": "ncc build src/index_github.js --license licenses.txt",
-    "start-ga": "node dist/index.js",
+    "build-ga": "ncc build src/index_github.cjs --license licenses.txt",
+    "start-ga": "node dist/index.cjs",
     "build": "tsc",
     "start": "probot run ./lib/index.js",
     "test": "vitest"
