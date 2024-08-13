@@ -50,9 +50,9 @@ export async function runAcrGitHubAction(
   const targetRepoPath = process.env.TARGET_REPO_PATH;
 
   // set env -> this is because ACR use a diff name for legacy reasons
-  process.env.OPENAI_KEY = passedOpenaiKey;
+  // process.env.OPENAI_KEY = passedOpenaiKey;
 
-  process.env.PYTHON_PATH = acrCodeDir;
+  // process.env.PYTHONPATH = acrCodeDir;
 
   // write the issue text to a file
   const issueTextFile = `${localAcrOutputDir}/issue.txt`;
@@ -83,7 +83,7 @@ export async function runAcrGitHubAction(
       cwd: acrCodeDir,
       env: {
         ...process.env,
-        "PYTHON_PATH": acrCodeDir,
+        "PYTHONPATH": acrCodeDir,
         "OPENAI_KEY": passedOpenaiKey,
       },
     },
