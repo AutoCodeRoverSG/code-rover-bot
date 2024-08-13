@@ -28,9 +28,10 @@ export async function runAcrGitHubAction(
   repoName: string,
   repoUrl: string
 ) {
-  // console.log("Going to run ACR on the following issue text:");
-  // console.log(issueText);
-  // console.log(repoUrl)
+  console.log("Going to run ACR on the following issue text:");
+  console.log(issueText);
+
+
   const modifiedRepoName = repoName.replace("/", "__");
 
   const taskId = `${modifiedRepoName}-${issueId}`;
@@ -58,6 +59,8 @@ export async function runAcrGitHubAction(
 
   const cmd = `python app/main.py local-issue --output-dir ${localAcrOutputDir} --model gpt-4o-2024-05-13 --task-id ${taskId} --local-repo ${targetRepoPath} --issue-file ${issueTextFile}`; // --no-print?
 
+  console.log(`Running ACR GitHub Action with command: ${cmd}`);
+
   // PYTHONPATH=. python app/main.py local-issue --output-dir output --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id <task id> --local-repo <path to the local project repository> --issue-file <path to the file containing issue description>
 
   // exec(cmd, (error, stdout, stderr) => {
@@ -69,7 +72,7 @@ export async function runAcrGitHubAction(
   //   console.error(`stderr: ${stderr}`);
   // });
 
-  exec(cmd);
+  exec(cmd, { cwd: acrCodeDir });
 
   const failureMessage = "I could not generate a patch for this issue.";
 
