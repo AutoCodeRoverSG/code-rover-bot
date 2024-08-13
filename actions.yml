@@ -1,0 +1,32 @@
+name: 'AutoCodeRover Bot'
+description: 'Suggest patch or fix location for GitHub issues.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Clone AutoCodeRover
+      run: git clone https://github.com/nus-apr/auto-code-rover.git /acr
+      shell: bash
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install AutoCodeRover deps
+      run: pip install -r /acr/requirements.txt
+      shell: bash
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Bot deps
+      run: npm ci
+      shell: bash
+
+    - name : Running bot
+      run: npm start # TODO: change this to GitHub Action command
+
+  # main: 'dist/index.js'

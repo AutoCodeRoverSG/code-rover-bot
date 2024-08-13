@@ -17,6 +17,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@vercel/ncc": "^0.38.1",
     "dockerode": "^4.0.2",
     "glob": "^11.0.0",
     "probot": "^13.0.1"
