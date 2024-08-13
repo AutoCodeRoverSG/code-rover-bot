@@ -9,7 +9,9 @@ const dockerImageName = "autocoderover/acr:v1";
 const OPENAI_KEY = "OPENAI_API_KEY";
 
 let docker = new Docker();
+import { exec } from "child_process";
 
+// PYTHONPATH=. python app/main.py github-issue --output-dir output --setup-dir setup --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id langchain-20453 --clone-link https://github.com/langchain-ai/langchain.git --commit-hash cb6e5e5 --issue-link https://github.com/langchain-ai/langchain/issues/20453
 
 /**
  * Run ACR as a GitHub action.
@@ -45,7 +47,59 @@ export async function runAcrGitHubAction(
 
   const targetRepoPath = process.env.TARGET_REPO_PATH;
 
-  return `Running ACR GitHub Action for ${taskId}. ACR code dir is ${acrCodeDir}, target repo path is ${targetRepoPath}.`;
+  // set env -> this is because ACR use a diff name for legacy reasons
+  process.env.OPENAI_KEY = passedOpenaiKey;
+
+  process.env.PYTHON_PATH = acrCodeDir;
+
+  // write the issue text to a file
+  const issueTextFile = `${localAcrOutputDir}/issue.txt`;
+  fs.writeFileSync(issueTextFile, issueText);
+
+  const cmd = `python app/main.py local-issue --output-dir ${localAcrOutputDir} --model gpt-4o-2024-05-13 --task-id ${taskId} --local-repo ${targetRepoPath} --issue-file ${issueTextFile}`; // --no-print?
+
+  // PYTHONPATH=. python app/main.py local-issue --output-dir output --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id <task id> --local-repo <path to the local project repository> --issue-file <path to the file containing issue description>
+
+  // exec(cmd, (error, stdout, stderr) => {
+  //   if (error) {
+  //     console.error(`Error running ACR GitHub Action: ${error}`);
+  //     // return `Error running ACR GitHub Action: ${error}`;
+  //   }
+  //   console.log(`stdout: ${stdout}`);
+  //   console.error(`stderr: ${stderr}`);
+  // });
+
+  exec(cmd);
+
+  const failureMessage = "I could not generate a patch for this issue.";
+
+  // read result
+  const realOutputDirs = globSync(`${localAcrOutputDir}/*`).filter((x) =>
+    path.basename(x).includes(taskId)
+  );
+  if (realOutputDirs.length === 0) {
+    console.error(`No output found in ${localAcrOutputDir}`);
+    return failureMessage;
+  }
+
+  // sort them and get last one, since they are sorted by timestamp
+  const realOutputDir = realOutputDirs.sort().reverse()[0];
+  const patch_path = path.join(realOutputDir, "final_patch.diff");
+
+  if (!fs.existsSync(patch_path)) {
+    console.error(`No patch found in ${realOutputDir}`);
+    return failureMessage;
+  }
+
+  let patch = fs.readFileSync(patch_path, "utf-8");
+  // console.log(patch);
+  if (!patch.startsWith("```")) {
+    patch = "```diff\n" + patch + "\n```";
+  }
+
+  return patch;
+
+  // return `Running ACR GitHub Action for ${taskId}. ACR code dir is ${acrCodeDir}, target repo path is ${targetRepoPath}.`;
 }
 
 export async function runAcrDocker(
