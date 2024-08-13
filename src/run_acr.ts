@@ -77,13 +77,24 @@ export async function runAcrGitHubAction(
   //   console.error(`stderr: ${stderr}`);
   // });
 
-  exec(cmd, { cwd: acrCodeDir }, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error running ACR GitHub Action: ${error}`);
+  exec(
+    cmd,
+    {
+      cwd: acrCodeDir,
+      env: {
+        ...process.env,
+        PYTHON_PATH: acrCodeDir,
+        OPENAI_KEY: passedOpenaiKey,
+      },
+    },
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error running ACR GitHub Action: ${error}`);
+      }
+      console.log(`stdout: ${stdout}`);
+      console.error(`stderr: ${stderr}`);
     }
-    console.log(`stdout: ${stdout}`);
-    console.error(`stderr: ${stderr}`);
-  });
+  );
 
   const failureMessage = "I could not generate a patch for this issue.";
 
