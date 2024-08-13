@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build-ga": "ncc build src/index_github.cjs --license licenses.txt",
-    "build-ga-new": "esbuild src/index_github.js --bundle --platform=node --outfile=dist/index.js --format=esm --loader:.node=copy",
+    "build-ga-new": "node build_ga.js",
     "start-ga": "node dist/index.cjs",
     "build": "tsc",
     "start": "probot run ./lib/index.js",
