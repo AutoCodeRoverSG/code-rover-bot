@@ -134,6 +134,11 @@ export async function runAcrLocal(
   return patch;
 }
 
+
+/**
+ * Run ACR in a docker container.
+ * This requires the ACR image to be available on the machine.
+ */
 export async function runAcrDocker(
   issueId: number,
   issueUrl: string,
