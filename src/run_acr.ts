@@ -1,17 +1,22 @@
+import { execSync } from "child_process";
 import Docker from "dockerode";
 import fs from "fs";
-import { getRootDir } from "./utils.js";
 import { globSync } from "glob";
 import path from "path";
+import { getRootDir } from "./utils.js";
 
 const dockerImageName = "autocoderover/acr:v1";
 
 const OPENAI_KEY = "OPENAI_API_KEY";
 
 let docker = new Docker();
-import { execSync } from "child_process";
 
-// PYTHONPATH=. python app/main.py github-issue --output-dir output --setup-dir setup --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id langchain-20453 --clone-link https://github.com/langchain-ai/langchain.git --commit-hash cb6e5e5 --issue-link https://github.com/langchain-ai/langchain/issues/20453
+export async function hasAcrImage(): Promise<boolean> {
+  let images = await docker.listImages({
+    filters: { reference: [dockerImageName] },
+  });
+  return images.length > 0;
+}
 
 /**
  * Run ACR as a GitHub action.
@@ -21,12 +26,10 @@ import { execSync } from "child_process";
  * - Using python and pip without conda.
  * - pip dependencies have already been installed.
  */
-export async function runAcrGitHubAction(
+export async function runAcrLocal(
   issueId: number,
-  issueUrl: string,
   issueText: string,
-  repoName: string,
-  repoUrl: string
+  repoName: string
 ) {
   // TODO: The issue text does not contain the issue title??
 
@@ -49,68 +52,53 @@ export async function runAcrGitHubAction(
 
   const targetRepoPath = process.env.TARGET_REPO_PATH;
 
-  // set env -> this is because ACR use a diff name for legacy reasons
-  // process.env.OPENAI_KEY = passedOpenaiKey;
-
-  // process.env.PYTHONPATH = acrCodeDir;
-
   // write the issue text to a file
   const issueTextFile = `${localAcrOutputDir}/issue.txt`;
   fs.writeFileSync(issueTextFile, issueText);
 
   console.log(`Wrote issue text to ${issueTextFile}`);
 
-  const cmd = `python app/main.py local-issue --output-dir ${localAcrOutputDir} --model gpt-4o-2024-05-13 --task-id ${taskId} --local-repo ${targetRepoPath} --issue-file ${issueTextFile}`; // --no-print?
+  const cmd =
+    `python app/main.py local-issue ` +
+    `--output-dir ${localAcrOutputDir} ` +
+    `--model gpt-4o-2024-05-13 ` +
+    `--task-id ${taskId} ` +
+    `--local-repo ${targetRepoPath} ` +
+    `--issue-file ${issueTextFile}`; // --no-print?
 
   console.log(
     `Running ACR GitHub Action with command: ${cmd}, in directory ${acrCodeDir}`
   );
 
-  // PYTHONPATH=. python app/main.py local-issue --output-dir output --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id <task id> --local-repo <path to the local project repository> --issue-file <path to the file containing issue description>
-
-  // exec(cmd, (error, stdout, stderr) => {
-  //   if (error) {
-  //     console.error(`Error running ACR GitHub Action: ${error}`);
-  //     // return `Error running ACR GitHub Action: ${error}`;
-  //   }
-  //   console.log(`stdout: ${stdout}`);
-  //   console.error(`stderr: ${stderr}`);
-  // });
   try {
-    const stdout = execSync(
-      cmd,
-      {
-        cwd: acrCodeDir,
-        env: {
-          ...process.env,
-          "PYTHONPATH": acrCodeDir,
-          "OPENAI_KEY": passedOpenaiKey,
-        },
-        encoding: 'utf-8',
+    // TODO: stream the output of this execution
+    const stdout = execSync(cmd, {
+      cwd: acrCodeDir,
+      env: {
+        ...process.env,
+        PYTHONPATH: acrCodeDir,
+        OPENAI_KEY: passedOpenaiKey,
       },
-      // (error, stdout, stderr) => {
-      //   if (error) {
-      //     console.error(`Error running ACR GitHub Action: ${error}`);
-      //   }
-      //   console.log(`stdout: ${stdout}`);
-      //   console.error(`stderr: ${stderr}`);
-      // }
-    );
+      encoding: "utf-8",
+    });
     console.log(`Output (stdout): ${stdout}`);
-  }
-  catch (error: any) { // TypeScript requires 'any' to access custom properties
+  } catch (error: any) {
+    // TypeScript requires 'any' to access custom properties
     console.error(`Error: ${error.message}`);
 
     if (error.stdout) {
-        console.error(`Captured stdout: ${error.stdout}`);
+      console.error(`Captured stdout: ${error.stdout}`);
     }
 
     if (error.stderr) {
-        console.error(`Captured stderr: ${error.stderr}`);
+      console.error(`Captured stderr: ${error.stderr}`);
     }
-    return `Error running ACR GitHub Action: ${error.message}`;
-}
 
+    console.error(`Error occurred running ACR GitHub Action: ${error.message}`);
+  }
+
+  // TODO: improve this message to be more user-friendly.
+  // We can potentially return the fix locations here.
   const failureMessage = "I could not generate a patch for this issue.";
 
   // read result
@@ -144,21 +132,14 @@ export async function runAcrGitHubAction(
   }
 
   return patch;
-
-  // return `Running ACR GitHub Action for ${taskId}. ACR code dir is ${acrCodeDir}, target repo path is ${targetRepoPath}.`;
 }
 
 export async function runAcrDocker(
   issueId: number,
   issueUrl: string,
-  issueText: string,
   repoName: string,
   repoUrl: string
 ) {
-  // console.log("Going to run ACR on the following issue text:");
-  // console.log(issueText);
-  // console.log(repoUrl);
-
   const modifiedRepoName = repoName.replace("/", "__");
 
   const taskId = `${modifiedRepoName}-${issueId}`;
@@ -241,5 +222,3 @@ export async function runAcrDocker(
 
   return patch;
 }
-
-// PYTHONPATH=. python app/main.py github-issue --output-dir output --setup-dir setup --model gpt-4o-2024-05-13 --model-temperature 0.2 --task-id langchain-20453 --clone-link https://github.com/langchain-ai/langchain.git --commit-hash cb6e5e5 --issue-link https://github.com/langchain-ai/langchain/issues/20453

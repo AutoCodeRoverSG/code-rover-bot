@@ -1,7 +1,39 @@
 import { Probot } from "probot";
-import { runAcrDocker, runAcrGitHubAction } from "./run_acr.js";
+import { hasAcrImage, runAcrDocker, runAcrLocal } from "./run_acr.js";
 
 const botMention = "@code-rover-bot";
+
+/**
+ * Wrapper to decide which ACR mode to dispatch.
+ */
+async function runAcr(
+  issueId: number,
+  issueUrl: string,
+  issueText: string,
+  repoName: string,
+  repoUrl: string
+): Promise<string> {
+  if (await hasAcrImage()) {
+    // run ACR in docker mode
+    const result = await runAcrDocker(
+      issueId,
+      issueUrl,
+      repoName,
+      repoUrl
+    );
+    return result;
+  } else {
+    // run ACR on on the same machine as this script
+    let result;
+    try {
+      result = await runAcrLocal(issueId, issueText, repoName);
+    } catch (error) {
+      console.log(error);
+      result = `Error occurred when running ACR: ${error}`;
+    }
+    return result;
+  }
+}
 
 export const robot = (app: Probot) => {
   app.on("issues.opened", async (context) => {
@@ -22,7 +54,7 @@ export const robot = (app: Probot) => {
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    const result = await runAcrDocker(
+    const acrResult = await runAcr(
       issueId,
       issueUrl,
       issueText,
@@ -31,7 +63,7 @@ export const robot = (app: Probot) => {
     );
 
     const resultComment = context.issue({
-      body: result,
+      body: acrResult,
     });
     await context.octokit.issues.createComment(resultComment);
   });
@@ -39,11 +71,6 @@ export const robot = (app: Probot) => {
   app.on("issue_comment.created", async (context) => {
     const commentText = context.payload.comment.body;
     app.log.info(commentText);
-
-    // const resultComment = context.issue({
-    //   body: "GitHub Action is working!",
-    // });
-    // await context.octokit.issues.createComment(resultComment);
 
     if (commentText == null) {
       return;
@@ -66,30 +93,16 @@ export const robot = (app: Probot) => {
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    let result;
-    try {
-      result = await runAcrGitHubAction(
-        issueId,
-        issueUrl,
-        issueText,
-        repoName,
-        repoUrl
-      );
-    }
-    catch (error) {
-      console.log(error);
-      result = `Error running ACR GitHub Action ${error}`;
-    }
-    // const result = await runAcrGitHubAction(
-    //   issueId,
-    //   issueUrl,
-    //   issueText,
-    //   repoName,
-    //   repoUrl
-    // );
+    const acrResult = await runAcr(
+      issueId,
+      issueUrl,
+      issueText,
+      repoName,
+      repoUrl
+    );
 
     const resultComment = context.issue({
-      body: result,
+      body: acrResult,
     });
     await context.octokit.issues.createComment(resultComment);
   });
