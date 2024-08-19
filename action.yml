@@ -10,7 +10,7 @@ runs:
 
     # - name: Clone AutoCodeRover
     #   id: clone-acr
-    #   run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "ACR_REPO=${{ github.action_path }}/acr" >> $GITHUB_OUTPUT && echo "clone ok"
+    #   run: git clone https://github.com/nus-apr/auto-code-rover.git ${{ github.action_path }}/acr && echo "ACR_PATH=${{ github.action_path }}/acr" >> $GITHUB_OUTPUT && echo "clone ok"
     #   shell: bash
 
     # - uses: actions/setup-python@v5
@@ -19,7 +19,7 @@ runs:
     #     # cache: 'pip'
 
     # - name: Install AutoCodeRover deps
-    #   run: pip install -r ${{ steps.clone-acr.outputs.ACR_REPO }}/requirements.txt && echo "pip install ok"
+    #   run: pip install -r ${{ steps.clone-acr.outputs.ACR_PATH }}/requirements.txt && echo "pip install ok"
     #   shell: bash
 
     - uses: actions/setup-node@v4
@@ -28,7 +28,10 @@ runs:
 
     - name : Running bot
       run: |
-        echo "ACR path: ${{ steps.setup-acr.outputs.acr_path }}"
+        echo "ACR path: ${{ steps.setup-acr.outputs.ACR_PATH }}"
         cd ${{ github.action_path }}
         npm run start-ga
       shell: bash
+      env:
+        ACR_PATH: ${{ steps.setup-acr.outputs.ACR_PATH }}
+        # ACR_PATH: ${{ steps.clone-acr.outputs.ACR_PATH }}

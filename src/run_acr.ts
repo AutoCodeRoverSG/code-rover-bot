@@ -46,7 +46,7 @@ export async function runAcrLocal(
     fs.mkdirSync(localAcrOutputDir, { recursive: true });
   }
 
-  const acrCodeDir = `${rootDir}/acr`;
+  const acrCodeDir = process.env.ACR_PATH;
 
   const passedOpenaiKey = process.env.OPENAI_API_KEY;
 
