@@ -6,11 +6,15 @@ runs:
   using: 'composite'
   steps:
     - uses: yuntongzhang/auto-code-rover@v1.0.0
+      id: setup-acr
 
     - uses: actions/setup-node@v4
       with:
         node-version: 20
 
     - name : Running bot
-      run: cd ${{ github.action_path }} && npm run start-ga
+      run: |
+        echo "ACR path: ${{ steps.setup-acr.outputs.acr_path }}"
+        cd ${{ github.action_path }}
+        npm run start-ga
       shell: bash
