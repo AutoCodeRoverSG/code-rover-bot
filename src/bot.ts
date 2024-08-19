@@ -1,7 +1,7 @@
 import { Probot } from "probot";
 import { hasAcrImage, runAcrDocker, runAcrLocal } from "./run_acr.js";
 
-const botMention = "@code-rover-bot";
+const botMention = "@acr-bot";
 
 /**
  * Wrapper to decide which ACR mode to dispatch.
