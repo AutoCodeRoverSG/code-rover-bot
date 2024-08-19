@@ -14,6 +14,7 @@ await esbuild.build({
         import { createRequire as topLevelCreateRequire } from 'module';
         const require = topLevelCreateRequire(import.meta.url);
         const __filename = __fileURLToPath(import.meta.url);
+        const path = require('node:path');
         const __dirname = path.dirname(__filename);
         `
     },
