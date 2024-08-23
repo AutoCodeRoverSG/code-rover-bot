@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import Docker from "dockerode";
 import fs from "fs";
 import { globSync } from "glob";
@@ -16,6 +16,55 @@ export async function hasAcrImage(): Promise<boolean> {
     filters: { reference: [dockerImageName] },
   });
   return images.length > 0;
+}
+
+/**
+ * Run a command in the local environment and stream its output.
+ *
+ */
+async function runCommandStreaming(
+  cmd: string,
+  args: string[],
+  cwd: string,
+  additionalEnv: any
+) {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const newProcess = spawn(cmd, args, {
+        cwd: cwd,
+        env: {
+          ...process.env,
+          ...additionalEnv,
+        },
+        shell: true,
+      });
+
+      newProcess.stdout.on("data", (data) => {
+        console.log(data.toString());
+      });
+
+      newProcess.stderr.on("data", (data) => {
+        console.error(data.toString());
+      });
+
+      newProcess.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Command exited with code ${code}`));
+        }
+      });
+
+      newProcess.on("error", (err) => {
+        reject(err);
+      });
+    });
+
+    console.log(`Command ${cmd} ${args.join(" ")} completed successfully`);
+  } catch (error: any) {
+    // TypeScript requires 'any' to access custom properties
+    console.error(`Command failed: ${error.message}`);
+  }
 }
 
 /**
@@ -46,11 +95,10 @@ export async function runAcrLocal(
     fs.mkdirSync(localAcrOutputDir, { recursive: true });
   }
 
-  const acrCodeDir = process.env.ACR_PATH;
-
-  const passedOpenaiKey = process.env.OPENAI_API_KEY;
-
-  const targetRepoPath = process.env.TARGET_REPO_PATH;
+  // NOTE: the environment variables must be set in the GitHub action
+  const acrCodeDir = process.env.ACR_PATH!;
+  const passedOpenaiKey = process.env.OPENAI_API_KEY!;
+  const targetRepoPath = process.env.TARGET_REPO_PATH!;
 
   // write the issue text to a file
   const issueTextFile = `${localAcrOutputDir}/issue.txt`;
@@ -58,48 +106,41 @@ export async function runAcrLocal(
 
   console.log(`Wrote issue text to ${issueTextFile}`);
 
-  const cmd =
-    `python app/main.py local-issue ` +
-    `--output-dir ${localAcrOutputDir} ` +
-    `--model gpt-4o-2024-05-13 ` +
-    `--task-id ${taskId} ` +
-    `--local-repo ${targetRepoPath} ` +
-    `--issue-file ${issueTextFile}`; // --no-print?
+  // const cmd =
+  //   `python app/main.py local-issue ` +
+  //   `--output-dir ${localAcrOutputDir} ` +
+  //   `--model gpt-4o-2024-05-13 ` +
+  //   `--task-id ${taskId} ` +
+  //   `--local-repo ${targetRepoPath} ` +
+  //   `--issue-file ${issueTextFile}`; // --no-print?
+  const cmd_args = [
+    "python",
+    "app/main.py",
+    "local-issue",
+    "--output-dir",
+    localAcrOutputDir,
+    "--model",
+    "gpt-4o-2024-05-13", // TODO: make this a parameter
+    "--task-id",
+    taskId,
+    "--local-repo",
+    targetRepoPath,
+    "--issue-file",
+    issueTextFile,
+  ];
 
   console.log(
-    `Running ACR GitHub Action with command: ${cmd}, in directory ${acrCodeDir}`
+    `Running ACR GitHub Action with command: ${cmd_args}, in directory ${acrCodeDir}`
   );
 
-  try {
-    // TODO: stream the output of this execution
-    const stdout = execSync(cmd, {
-      cwd: acrCodeDir,
-      env: {
-        ...process.env,
-        PYTHONPATH: acrCodeDir,
-        OPENAI_KEY: passedOpenaiKey,
-      },
-      encoding: "utf-8",
-    });
-    console.log(`Output (stdout): ${stdout}`);
-  } catch (error: any) {
-    // TypeScript requires 'any' to access custom properties
-    console.error(`Error: ${error.message}`);
-
-    if (error.stdout) {
-      console.error(`Captured stdout: ${error.stdout}`);
-    }
-
-    if (error.stderr) {
-      console.error(`Captured stderr: ${error.stderr}`);
-    }
-
-    console.error(`Error occurred running ACR GitHub Action: ${error.message}`);
-  }
+  runCommandStreaming("python", cmd_args, acrCodeDir, {
+    PYTHONPATH: acrCodeDir,
+    OPENAI_KEY: passedOpenaiKey,
+  });
 
   // TODO: improve this message to be more user-friendly.
   // We can potentially return the fix locations here.
-  const failureMessage = "I could not generate a patch for this issue.";
+  const failureIssueComment = "I could not generate a patch for this issue.";
 
   // read result
   const outDirsBeforeFiltering = globSync(`${localAcrOutputDir}/*`);
@@ -113,7 +154,7 @@ export async function runAcrLocal(
   );
   if (realOutputDirs.length === 0) {
     console.error(`No output found in ${localAcrOutputDir}`);
-    return failureMessage;
+    return failureIssueComment;
   }
 
   // sort them and get last one, since they are sorted by timestamp
@@ -122,7 +163,7 @@ export async function runAcrLocal(
 
   if (!fs.existsSync(patch_path)) {
     console.error(`No patch found in ${realOutputDir}`);
-    return failureMessage;
+    return failureIssueComment;
   }
 
   let patch = fs.readFileSync(patch_path, "utf-8");
@@ -133,7 +174,6 @@ export async function runAcrLocal(
 
   return patch;
 }
-
 
 /**
  * Run ACR in a docker container.
