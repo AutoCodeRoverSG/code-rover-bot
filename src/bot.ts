@@ -68,7 +68,7 @@ async function processIssue(
   const elapsed_s = elapsed_ms / 1000;
 
   // TODO: configure role from here
-  recordInvocation(
+  await recordInvocation(
     AgentType.GithubApp,
     context.payload.sender.login,
     context.payload.sender.html_url,
