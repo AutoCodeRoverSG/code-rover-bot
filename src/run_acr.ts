@@ -50,9 +50,11 @@ function readResultMeta(
 
   const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
 
-  return (
-    meta["total_cost"], meta["total_input_tokens"], meta["total_output_tokens"]
-  );
+  return [
+    meta["total_cost"],
+    meta["total_input_tokens"],
+    meta["total_output_tokens"],
+  ];
 }
 
 function readAcrOutput(
