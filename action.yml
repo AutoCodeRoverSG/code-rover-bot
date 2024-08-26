@@ -18,6 +18,6 @@ runs:
         cd ${{ github.action_path }}
         npm run start-ga
       shell: bash
-      env:
+      env: |
         ACR_PATH: ${{ steps.setup-acr.outputs.ACR_PATH }}
         ANALYTICS_TOKEN: ${{ secrets.ANALYTICS_TOKEN }}
