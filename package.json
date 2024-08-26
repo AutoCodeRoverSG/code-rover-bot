@@ -24,11 +24,13 @@
     "@vercel/ncc": "^0.38.1",
     "dockerode": "^4.0.2",
     "glob": "^11.0.0",
+    "node-fetch": "^3.3.2",
     "probot": "^13.0.1"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.31",
     "@types/node": "^20.14.14",
+    "@types/node-fetch": "^2.6.11",
     "esbuild": "0.23.0",
     "nock": "^14.0.0-beta.5",
     "smee-client": "^2.0.0",

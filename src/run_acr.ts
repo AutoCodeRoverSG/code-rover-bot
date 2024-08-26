@@ -5,6 +5,28 @@ import { globSync } from "glob";
 import path from "path";
 import { getRootDir } from "./utils.js";
 
+export type AcrResult = {
+  run_ok: boolean;
+  result: string;
+  additional_info: string | null;
+  model: string;
+  // these stats may not exist, depends on whether
+  // the run was able to finish
+  cost: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+};
+
+export const dummyAcrResult: AcrResult = {
+  run_ok: false,
+  result: "I could not not generate a patch for this issue.",
+  additional_info: null,
+  model: "default-model",
+  cost: null,
+  input_tokens: null,
+  output_tokens: null,
+};
+
 const dockerImageName = "autocoderover/acr:v1";
 
 const OPENAI_KEY = "OPENAI_API_KEY";
@@ -16,6 +38,85 @@ export async function hasAcrImage(): Promise<boolean> {
     filters: { reference: [dockerImageName] },
   });
   return images.length > 0;
+}
+
+function readResultMeta(
+  resultDir: string
+): [number | null, number | null, number | null] {
+  const metaPath = path.join(resultDir, "cost.json");
+  if (!fs.existsSync(metaPath)) {
+    return [null, null, null];
+  }
+
+  const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+
+  return (
+    meta["total_cost"], meta["total_input_tokens"], meta["total_output_tokens"]
+  );
+}
+
+function readAcrOutput(
+  acrOutputDir: string,
+  taskId: string,
+  modelName: string
+): AcrResult {
+  // TODO: improve this message to be more user-friendly.
+  // We can potentially return the fix locations here.
+  const failureIssueComment = "I could not generate a patch for this issue.";
+
+  const realOutputDirs = globSync(`${acrOutputDir}/*`).filter((x) =>
+    path.basename(x).includes(taskId)
+  );
+  if (realOutputDirs.length === 0) {
+    const errorMsg = `SetupError: No output found in ${acrOutputDir}`;
+    console.error(errorMsg);
+    return {
+      run_ok: false,
+      result: failureIssueComment,
+      additional_info: errorMsg,
+      model: modelName,
+      cost: null,
+      input_tokens: null,
+      output_tokens: null,
+    };
+  }
+
+  // sort them and get last one, since they are sorted by timestamp
+  const realOutputDir = realOutputDirs.sort().reverse()[0];
+  const patch_path = path.join(realOutputDir, "final_patch.diff");
+
+  // read cost
+  const [cost, inputTokens, outputTokens] = readResultMeta(realOutputDir);
+
+  if (!fs.existsSync(patch_path)) {
+    const errorMsg = `PatchGenError: No patch found in ${realOutputDir}`;
+    console.error(errorMsg);
+    return {
+      run_ok: false,
+      result: failureIssueComment,
+      additional_info: errorMsg,
+      model: modelName,
+      cost: cost,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+    };
+  }
+
+  let patch = fs.readFileSync(patch_path, "utf-8");
+  // console.log(patch);
+  if (!patch.startsWith("```")) {
+    patch = "```diff\n" + patch + "\n```";
+  }
+
+  return {
+    run_ok: true,
+    result: patch,
+    additional_info: null,
+    model: modelName,
+    cost: cost,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+  };
 }
 
 /**
@@ -79,8 +180,11 @@ export async function runAcrLocal(
   issueId: number,
   issueText: string,
   repoName: string
-) {
+): Promise<AcrResult> {
   // TODO: The issue text does not contain the issue title??
+
+  // TODO: make this a parameter
+  const seletedModel = "gpt-4o-2024-05-13";
 
   console.log("Going to run ACR on the following issue text:");
   console.log(issueText);
@@ -120,7 +224,7 @@ export async function runAcrLocal(
     "--output-dir",
     localAcrOutputDir,
     "--model",
-    "gpt-4o-2024-05-13", // TODO: make this a parameter
+    seletedModel,
     "--task-id",
     taskId,
     "--local-repo",
@@ -138,41 +242,7 @@ export async function runAcrLocal(
     OPENAI_KEY: passedOpenaiKey,
   });
 
-  // TODO: improve this message to be more user-friendly.
-  // We can potentially return the fix locations here.
-  const failureIssueComment = "I could not generate a patch for this issue.";
-
-  // read result
-  const outDirsBeforeFiltering = globSync(`${localAcrOutputDir}/*`);
-  console.log("Printing out dirs before filtering:");
-  for (const dir of outDirsBeforeFiltering) {
-    console.log(dir);
-  }
-
-  const realOutputDirs = globSync(`${localAcrOutputDir}/*`).filter((x) =>
-    path.basename(x).includes(taskId)
-  );
-  if (realOutputDirs.length === 0) {
-    console.error(`No output found in ${localAcrOutputDir}`);
-    return failureIssueComment;
-  }
-
-  // sort them and get last one, since they are sorted by timestamp
-  const realOutputDir = realOutputDirs.sort().reverse()[0];
-  const patch_path = path.join(realOutputDir, "final_patch.diff");
-
-  if (!fs.existsSync(patch_path)) {
-    console.error(`No patch found in ${realOutputDir}`);
-    return failureIssueComment;
-  }
-
-  let patch = fs.readFileSync(patch_path, "utf-8");
-  // console.log(patch);
-  if (!patch.startsWith("```")) {
-    patch = "```diff\n" + patch + "\n```";
-  }
-
-  return patch;
+  return readAcrOutput(localAcrOutputDir, taskId, seletedModel);
 }
 
 /**
@@ -184,7 +254,10 @@ export async function runAcrDocker(
   issueUrl: string,
   repoName: string,
   repoUrl: string
-) {
+): Promise<AcrResult> {
+  // TODO: make this a parameter
+  const selectedModel = "gpt-4o-2024-05-13";
+
   const modifiedRepoName = repoName.replace("/", "__");
 
   const taskId = `${modifiedRepoName}-${issueId}`;
@@ -211,7 +284,7 @@ export async function runAcrDocker(
     "--setup-dir",
     "setup",
     "--model",
-    "gpt-4o-2024-05-13",
+    selectedModel,
     "--task-id",
     taskId,
     "--clone-link",
@@ -239,31 +312,5 @@ export async function runAcrDocker(
   const container = data[1];
   container.remove();
 
-  const failureMessage = "I could not generate a patch for this issue.";
-
-  // read result
-  const realOutputDirs = globSync(`${localAcrOutputDir}/*`).filter((x) =>
-    path.basename(x).includes(taskId)
-  );
-  if (realOutputDirs.length === 0) {
-    console.error(`No output found in ${localAcrOutputDir}`);
-    return failureMessage;
-  }
-
-  // sort them and get last one, since they are sorted by timestamp
-  const realOutputDir = realOutputDirs.sort().reverse()[0];
-  const patch_path = path.join(realOutputDir, "final_patch.diff");
-
-  if (!fs.existsSync(patch_path)) {
-    console.error(`No patch found in ${realOutputDir}`);
-    return failureMessage;
-  }
-
-  let patch = fs.readFileSync(patch_path, "utf-8");
-  // console.log(patch);
-  if (!patch.startsWith("```")) {
-    patch = "```diff\n" + patch + "\n```";
-  }
-
-  return patch;
+  return readAcrOutput(localAcrOutputDir, taskId, selectedModel);
 }

@@ -1,5 +1,12 @@
 import { Probot } from "probot";
-import { hasAcrImage, runAcrDocker, runAcrLocal } from "./run_acr.js";
+import { recordInvocation, AgentType } from "./analytics.js";
+import {
+  hasAcrImage,
+  runAcrDocker,
+  runAcrLocal,
+  AcrResult,
+  dummyAcrResult,
+} from "./run_acr.js";
 
 const botMention = "@acr-bot";
 
@@ -12,15 +19,10 @@ async function runAcr(
   issueText: string,
   repoName: string,
   repoUrl: string
-): Promise<string> {
+): Promise<AcrResult> {
   if (await hasAcrImage()) {
     // run ACR in docker mode
-    const result = await runAcrDocker(
-      issueId,
-      issueUrl,
-      repoName,
-      repoUrl
-    );
+    const result = await runAcrDocker(issueId, issueUrl, repoName, repoUrl);
     return result;
   } else {
     // run ACR on on the same machine as this script
@@ -29,10 +31,64 @@ async function runAcr(
       result = await runAcrLocal(issueId, issueText, repoName);
     } catch (error) {
       console.log(error);
-      result = `Error occurred when running ACR: ${error}`;
+      result = dummyAcrResult;
     }
     return result;
   }
+}
+
+async function processIssue(
+  context: any,
+  issueId: number,
+  issueUrl: string,
+  issueText: string,
+  repoName: string,
+  repoUrl: string
+) {
+  // record time of request
+  const startTime = new Date();
+
+  const acrResult = await runAcr(
+    issueId,
+    issueUrl,
+    issueText,
+    repoName,
+    repoUrl
+  );
+
+  const resultComment = context.issue({
+    body: acrResult.result,
+  });
+
+  // webhook payload has: repository, sender, issue
+
+  const endTime = new Date();
+
+  const elapsed_ms = endTime.getTime() - startTime.getTime();
+  const elapsed_s = elapsed_ms / 1000;
+
+  recordInvocation(
+    AgentType.GithubApp,
+    context.payload.sender.login,
+    context.payload.sender.html_url,
+    context.payload.sender.type,
+    context.payload.sender.site_admin,
+    context.payload.repository.full_name,
+    context.payload.repository.html_url,
+
+    issueText,
+    issueUrl,
+
+    startTime.toISOString(),
+    endTime.toISOString(),
+    elapsed_s.toString(),
+
+    String(acrResult.cost),
+    acrResult.run_ok,
+    acrResult.result
+  );
+
+  await context.octokit.issues.createComment(resultComment);
 }
 
 export const robot = (app: Probot) => {
@@ -54,18 +110,7 @@ export const robot = (app: Probot) => {
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    const acrResult = await runAcr(
-      issueId,
-      issueUrl,
-      issueText,
-      repoName,
-      repoUrl
-    );
-
-    const resultComment = context.issue({
-      body: acrResult,
-    });
-    await context.octokit.issues.createComment(resultComment);
+    processIssue(context, issueId, issueUrl, issueText, repoName, repoUrl);
   });
 
   app.on("issue_comment.created", async (context) => {
@@ -93,17 +138,6 @@ export const robot = (app: Probot) => {
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    const acrResult = await runAcr(
-      issueId,
-      issueUrl,
-      issueText,
-      repoName,
-      repoUrl
-    );
-
-    const resultComment = context.issue({
-      body: acrResult,
-    });
-    await context.octokit.issues.createComment(resultComment);
+    processIssue(context, issueId, issueUrl, issueText, repoName, repoUrl);
   });
 };
