@@ -218,7 +218,6 @@ export async function runAcrLocal(
   //   `--local-repo ${targetRepoPath} ` +
   //   `--issue-file ${issueTextFile}`; // --no-print?
   const cmd_args = [
-    "python",
     "app/main.py",
     "local-issue",
     "--output-dir",
