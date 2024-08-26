@@ -3,8 +3,8 @@ import fetch from "node-fetch";
 const ENDPOINT = "https://app.autocoderover.dev/usage/new";
 
 export enum AgentType {
-    GithubAction = "GitHub Action",
-    GithubApp = "GitHub App"
+  GithubAction = "GitHub Action",
+  GithubApp = "GitHub App",
 }
 
 /**
@@ -12,7 +12,23 @@ export enum AgentType {
  * Only records some public information for book-keeping.
  *
  */
-export async function recordInvocation(agent: AgentType, username: string, userProfile: string, userType: string, isUserAdmin: boolean, repoName: string, repoUrl: string, issueText: string, issueUrl: string, started: string, ended: string, duration: string, cost: string, status: boolean, result: string) {
+export async function recordInvocation(
+  agent: AgentType,
+  username: string,
+  userProfile: string,
+  userType: string,
+  isUserAdmin: boolean,
+  repoName: string,
+  repoUrl: string,
+  issueText: string,
+  issueUrl: string,
+  started: string,
+  ended: string,
+  duration: string,
+  cost: string,
+  status: boolean,
+  result: string
+) {
   const analyticsToken = process.env.ANALYTICS_TOKEN;
 
   const data = {

@@ -20,3 +20,4 @@ runs:
       shell: bash
       env:
         ACR_PATH: ${{ steps.setup-acr.outputs.ACR_PATH }}
+        ANALYTICS_TOKEN: ${{ secrets.ANALYTICS_TOKEN }}
