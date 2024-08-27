@@ -81,8 +81,8 @@ async function processIssue(
     issueTitle,
     issueUrl,
 
-    startTime.getTime(),
-    endTime.getTime(),
+    startTime.getTime() / 1000, // convert to seconds
+    endTime.getTime() / 1000, // convert to seconds
     elapsed_s,
 
     acrResult.cost ?? 0,
