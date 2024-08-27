@@ -29,9 +29,7 @@ export async function recordInvocation(
   status: boolean,
   result: string
 ) {
-  // const analyticsToken = process.env.ANALYTICS_TOKEN;
-  // FIXME: for testing
-  const analyticsToken = "digpsngpirhspdjrpoea0934u9je";
+  const analyticsToken = process.env.ANALYTICS_TOKEN;
 
   const data = {
     agent: agent,
