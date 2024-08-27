@@ -80,11 +80,11 @@ async function processIssue(
     issueText,
     issueUrl,
 
-    startTime.toISOString(),
-    endTime.toISOString(),
-    elapsed_s.toString(),
+    startTime.getTime(),
+    endTime.getTime(),
+    elapsed_s,
 
-    String(acrResult.cost),
+    acrResult.cost ?? 0,
     acrResult.run_ok,
     acrResult.result
   );

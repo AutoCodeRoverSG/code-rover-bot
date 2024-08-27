@@ -22,10 +22,10 @@ export async function recordInvocation(
   repoUrl: string,
   issueText: string,
   issueUrl: string,
-  started: string,
-  ended: string,
-  duration: string,
-  cost: string,
+  started: number,
+  ended: number,
+  duration: number,
+  cost: number,
   status: boolean,
   result: string
 ) {
