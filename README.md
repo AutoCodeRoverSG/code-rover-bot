@@ -1,6 +1,6 @@
 # AutoCodeRover GitHub Bot
 
-## Set up as GitHub action
+## Set up as GitHub Action
 
 1. In your repository, create a new workflow file (e.g. `acr_bot.yml`) in `.github/workflows/`. Then, copy the content of `workflow_template.yml` in this repository to your newly created workflow file.
 
@@ -9,3 +9,7 @@
 
 > [!NOTE]
 > Currently the bot uses OpenAI GPT-4o as the backend model by default. Support to more models (from the bot) coming soon!
+
+
+## Set up as GitHub App
+

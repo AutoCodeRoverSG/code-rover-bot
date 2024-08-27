@@ -58,7 +58,7 @@ export async function recordInvocation(
   };
 
   try {
-    await fetch(ENDPOINT, {
+    const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "multipart/form-data",
@@ -66,6 +66,13 @@ export async function recordInvocation(
       body: JSON.stringify(data),
       agent: new (require("https").Agent)({ rejectUnauthorized: false }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const returnedMessage = await response.text();
+    console.log("Returned message: ", returnedMessage);
   } catch (error) {
     console.error("Error when recording usage stats: ", error);
   }
