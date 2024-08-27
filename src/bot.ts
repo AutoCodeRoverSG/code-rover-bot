@@ -41,7 +41,8 @@ async function processIssue(
   context: any,
   issueId: number,
   issueUrl: string,
-  issueText: string,
+  issueTitle: string,
+  issueFullText: string,
   repoName: string,
   repoUrl: string
 ) {
@@ -51,7 +52,7 @@ async function processIssue(
   const acrResult = await runAcr(
     issueId,
     issueUrl,
-    issueText,
+    issueFullText,
     repoName,
     repoUrl
   );
@@ -77,7 +78,7 @@ async function processIssue(
     context.payload.repository.full_name,
     context.payload.repository.html_url,
 
-    issueText,
+    issueTitle,
     issueUrl,
 
     startTime.getTime(),
@@ -94,6 +95,7 @@ async function processIssue(
 
 export const robot = (app: Probot) => {
   app.on("issues.opened", async (context) => {
+    const issueTitle = context.payload.issue.title;
     const issueText = context.payload.issue.body;
     app.log.info(issueText);
 
@@ -105,13 +107,23 @@ export const robot = (app: Probot) => {
       return;
     }
 
+    const issueFullText = issueTitle + "\n" + issueText;
+
     const issueId = context.payload.issue.number;
     const issueUrl = context.payload.issue.html_url;
 
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    processIssue(context, issueId, issueUrl, issueText, repoName, repoUrl);
+    processIssue(
+      context,
+      issueId,
+      issueUrl,
+      issueTitle,
+      issueFullText,
+      repoName,
+      repoUrl
+    );
   });
 
   app.on("issue_comment.created", async (context) => {
@@ -126,6 +138,7 @@ export const robot = (app: Probot) => {
       return;
     }
 
+    const issueTitle = context.payload.issue.title;
     const issueText = context.payload.issue.body;
 
     if (issueText == null) {
@@ -133,12 +146,22 @@ export const robot = (app: Probot) => {
       return;
     }
 
+    const issueFullText = issueTitle + "\n" + issueText;
+
     const issueId = context.payload.issue.number;
     const issueUrl = context.payload.issue.html_url;
 
     const repoUrl = context.payload.repository.clone_url;
     const repoName = context.payload.repository.full_name;
 
-    processIssue(context, issueId, issueUrl, issueText, repoName, repoUrl);
+    processIssue(
+      context,
+      issueId,
+      issueUrl,
+      issueTitle,
+      issueFullText,
+      repoName,
+      repoUrl
+    );
   });
 };

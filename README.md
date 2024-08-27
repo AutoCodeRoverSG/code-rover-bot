@@ -13,3 +13,14 @@
 
 ## Set up as GitHub App
 
+
+Action
+
+- Takes longer since dependencies need to be installed each time.
+- Currently uses AutoCodeRover-v1 (20240408) as the backend.
+- Supports Python projects.
+
+App
+
+- Currently uses AutoCodeRover-v2 () as the backend.
+- Supports Python, Java, and C projects. Experimental support for C++ and Go.
