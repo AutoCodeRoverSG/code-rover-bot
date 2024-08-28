@@ -11,13 +11,11 @@ export async function openPR(
 ) {
   // retrieve all comments from the issue
 
-  console.log("issueId: ", issueId);
-  console.log("repoName: ", repoName);
-  console.log("ownerName: ", ownerName);
+  const repoShortName = repoName.split("/")[1];
 
   const { data: comments } = await context.octokit.rest.issues.listComments({
     ownerName,
-    repoName,
+    repoShortName,
     issueId,
   });
 
