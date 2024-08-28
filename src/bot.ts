@@ -20,6 +20,10 @@ async function runAcr(
   repoName: string,
   repoUrl: string
 ): Promise<AcrResult> {
+
+  const hostname = require("os").hostname();
+  console.log(`Hostname: ${hostname}`);
+
   if (await hasAcrImage()) {
     // run ACR in docker mode
     const result = await runAcrDocker(issueId, issueUrl, repoName, repoUrl);
