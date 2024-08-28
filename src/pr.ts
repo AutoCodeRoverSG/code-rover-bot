@@ -75,10 +75,12 @@ export async function openPR(
     return;
   }
 
-  const patchContent = lastCommentWithPatch.substring(
+  let patchContent = lastCommentWithPatch.substring(
     patchStartIndex + patchStart.length,
     patchEndIndex
   );
+
+  patchContent = patchContent.trim();
 
   const targetRepoDir = process.env.TARGET_REPO_PATH!;
 
@@ -89,6 +91,8 @@ export async function openPR(
   const newBranch = `acr-bot-patch-${issueId}`;
 
   await git.checkoutLocalBranch(newBranch);
+
+  console.log(patchContent);
 
   await git.applyPatch(patchContent);
 

@@ -39,6 +39,14 @@ async function runAcr(
   repoUrl: string
 ): Promise<AcrResult> {
   // first check for key
+
+  if (mode.modelName == "") {
+    let result = dummyAcrResult;
+    result.result =
+      "No API key is set up. Please set up either OpenAI or Anthropic API key.";
+    return result;
+  }
+
   if (OpenaiModels.includes(mode.modelName!) && !process.env.OPENAI_API_KEY) {
     let result = dummyAcrResult;
     result.result =

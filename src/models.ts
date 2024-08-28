@@ -12,5 +12,16 @@ export const AnthropicModels = [
   "claude-3-sonnet-20240229",
 ];
 
+function getDefaultModel() {
+  if (process.env.OPENAI_API_KEY) {
+    return "gpt-4o-2024-05-13";
+  }
 
-export const defaultModel = "gpt-4o-2024-05-13";
+  if (process.env.ANTHROPIC_API_KEY) {
+    return "claude-3-5-sonnet-20240620";
+  }
+
+  return "";
+}
+
+export const defaultModel = getDefaultModel();
