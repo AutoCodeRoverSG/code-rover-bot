@@ -5,13 +5,23 @@ import { simpleGit } from "simple-git";
 export async function openPR(
   context: any,
   issueId: number,
-  issueTitle: string
+  issueTitle: string,
+  repoName: string,
+  ownerName: string
 ) {
+  // retrieve all comments from the issue
+
+  const { data: comments } = await context.octokit.rest.issues.listComments({
+    owner: ownerName,
+    repo: repoName,
+    issue_number: issueId,
+  });
+
   // traverse the issue conversation history to find the latest patch
 
   let lastCommentWithPatch = "";
 
-  context.payload.issue_comments.forEach((comment: any) => {
+  comments.forEach((comment: any) => {
     if (comment.user.type == "Bot") {
       // bot created comment - let's see whether a patch is contained.
       if (comment.body.startsWith(successMessagePrefix)) {

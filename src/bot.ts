@@ -98,14 +98,12 @@ async function resolveIssue(
   let resultCommentBody = "";
 
   if (acrResult.run_ok) {
-    resultCommentBody =
-      successMessagePrefix +
-      "\n" +
-      acrResult.result +
-      "\n\n---\n\n" +
-      "This run costs " +
-      acrResult.cost +
-      " USD.";
+    resultCommentBody = successMessagePrefix + "\n" + acrResult.result;
+
+    if (acrResult.cost) {
+      resultCommentBody +=
+        "\n\n---\n\n" + "This run costs " + acrResult.cost.toFixed(2) + " USD.";
+    }
   } else {
     resultCommentBody = acrResult.result;
   }
@@ -211,6 +209,8 @@ async function dispatchWithMode(mode: Mode, context: any) {
   const repoUrl = context.payload.repository.clone_url;
   const repoName = context.payload.repository.full_name;
 
+  const ownerName = context.payload.repository.owner.login;
+
   if (mode.instructType == InstructType.Patch) {
     await resolveIssue(
       context,
@@ -225,7 +225,7 @@ async function dispatchWithMode(mode: Mode, context: any) {
   }
 
   if (mode.instructType == InstructType.PR) {
-    await openPR(context, issueId, issueTitle);
+    await openPR(context, issueId, issueTitle, repoName, ownerName);
   }
 }
 
