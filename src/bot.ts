@@ -14,17 +14,14 @@ const botMention = "@acr-bot";
  * Wrapper to decide which ACR mode to dispatch.
  */
 async function runAcr(
+  isDockerMode: boolean,
   issueId: number,
   issueUrl: string,
   issueText: string,
   repoName: string,
   repoUrl: string
 ): Promise<AcrResult> {
-
-  const hostname = require("os").hostname();
-  console.log(`Hostname: ${hostname}`);
-
-  if (await hasAcrImage()) {
+  if (isDockerMode) {
     // run ACR in docker mode
     const result = await runAcrDocker(issueId, issueUrl, repoName, repoUrl);
     return result;
@@ -53,7 +50,16 @@ async function processIssue(
   // record time of request
   const startTime = new Date();
 
+  const dockerMode = await hasAcrImage();
+
+  if (dockerMode) {
+    console.log("Running in docker mode");
+  } else {
+    console.log("Running in local mode");
+  }
+
   const acrResult = await runAcr(
+    dockerMode,
     issueId,
     issueUrl,
     issueFullText,
@@ -69,12 +75,13 @@ async function processIssue(
 
   const endTime = new Date();
 
-  const elapsed_ms = endTime.getTime() - startTime.getTime();
-  const elapsed_s = elapsed_ms / 1000;
+  const elapsedMs = endTime.getTime() - startTime.getTime();
+  const elapsedS = elapsedMs / 1000;
 
-  // TODO: configure role from here
+  const agentType = dockerMode ? AgentType.GithubApp : AgentType.GithubAction;
+
   await recordInvocation(
-    AgentType.GithubApp,
+    agentType,
     context.payload.sender.login,
     context.payload.sender.html_url,
     context.payload.sender.type,
@@ -87,7 +94,7 @@ async function processIssue(
 
     startTime.getTime() / 1000, // convert to seconds
     endTime.getTime() / 1000, // convert to seconds
-    elapsed_s,
+    elapsedS,
 
     acrResult.cost ?? 0,
     acrResult.run_ok,
