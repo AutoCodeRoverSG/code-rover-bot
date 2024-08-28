@@ -17,7 +17,7 @@ export async function openPR(
     owner: ownerName,
     repo: repoShortName,
     issue_number: issueId,
-    per_page: 100
+    per_page: 100,
   });
 
   // traverse the issue conversation history to find the latest patch
@@ -27,7 +27,6 @@ export async function openPR(
   console.log(`comments: ${comments}`);
 
   comments.forEach((comment: any) => {
-
     console.log(comment.user.type);
     console.log(comment.body);
 
@@ -60,7 +59,10 @@ export async function openPR(
   const patchEnd = "```";
 
   const patchStartIndex = lastCommentWithPatch.indexOf(patchStart);
-  const patchEndIndex = lastCommentWithPatch.indexOf(patchEnd, patchStartIndex);
+  const patchEndIndex = lastCommentWithPatch.indexOf(
+    patchEnd,
+    patchStartIndex + patchStart.length
+  );
 
   if (patchStartIndex == -1 || patchEndIndex == -1) {
     // patch format is not correct
