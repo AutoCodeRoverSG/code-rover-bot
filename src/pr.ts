@@ -11,10 +11,14 @@ export async function openPR(
 ) {
   // retrieve all comments from the issue
 
+  console.log("issueId: ", issueId);
+  console.log("repoName: ", repoName);
+  console.log("ownerName: ", ownerName);
+
   const { data: comments } = await context.octokit.rest.issues.listComments({
-    owner: ownerName,
-    repo: repoName,
-    issue_number: issueId,
+    ownerName,
+    repoName,
+    issueId,
   });
 
   // traverse the issue conversation history to find the latest patch
