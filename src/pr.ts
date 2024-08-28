@@ -90,6 +90,9 @@ export async function openPR(
 
   const git = simpleGit(targetRepoDir);
 
+  await git.addConfig("user.email", "acr@autocoderover.dev");
+  await git.addConfig("user.name", "acr-bot");
+
   const currentBranch = (await git.status()).current;
 
   const newBranch = `acr-bot-patch-${issueId}`;
