@@ -23,7 +23,13 @@ export async function openPR(
 
   let lastCommentWithPatch = "";
 
+  console.log(`comments: ${comments}`);
+
   comments.forEach((comment: any) => {
+
+    console.log(comment.user.type);
+    console.log(comment.body);
+
     if (comment.user.type == "Bot") {
       // bot created comment - let's see whether a patch is contained.
       if (comment.body.startsWith(successMessagePrefix)) {
