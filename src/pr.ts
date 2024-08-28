@@ -83,7 +83,8 @@ export async function openPR(
     patchEndIndex
   );
 
-  patchContent = patchContent.trim();
+  // only trim leading spaces and new lines
+  patchContent = patchContent.replace(/^\s+/g, "");
 
   const targetRepoDir = process.env.TARGET_REPO_PATH!;
 
