@@ -17,6 +17,8 @@ export async function openPR(
     owner: ownerName,
     repo: repoShortName,
     issue_number: issueId,
+    per_page: 100,
+    page: 5
   });
 
   // traverse the issue conversation history to find the latest patch
