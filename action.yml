@@ -20,3 +20,7 @@ runs:
       shell: bash
       env:
         ACR_PATH: ${{ steps.setup-acr.outputs.ACR_PATH }}
+
+branding:
+  icon: 'code'
+  color: 'blue'

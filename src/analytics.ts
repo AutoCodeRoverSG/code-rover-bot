@@ -69,8 +69,6 @@ export async function recordInvocation(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const returnedMessage = await response.text();
-    console.log("Returned message: ", returnedMessage);
   } catch (error) {
     console.error("Error when recording usage stats: ", error);
   }
