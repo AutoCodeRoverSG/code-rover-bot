@@ -286,6 +286,10 @@ export const robot = (app: Probot) => {
       return;
     }
 
+    console.log(`mode.agentType: ${mode.agentType}`);
+    console.log(`mode.instructType: ${mode.instructType}`);
+    console.log(`mode.modelName: ${mode.modelName}`);
+
     await dispatchWithMode(mode, context);
   });
 };
