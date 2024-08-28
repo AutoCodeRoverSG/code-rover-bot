@@ -1,6 +1,7 @@
+import { simpleGit } from "simple-git";
 import { botMention, successMessagePrefix } from "./constants.js";
 
-import { simpleGit } from "simple-git";
+import fs from "fs";
 
 export async function openPR(
   context: any,
@@ -96,7 +97,11 @@ export async function openPR(
 
   console.log(patchContent);
 
-  await git.applyPatch(patchContent);
+  // write patchContent to a local temp file
+  const patchFilePath = `${targetRepoDir}/acr_patch_${issueId}.diff`;
+  fs.writeFileSync(patchFilePath, patchContent);
+
+  await git.applyPatch(patchFilePath);
 
   await git.add(".");
   await git.commit(`Patch for issue #${issueId}`);
