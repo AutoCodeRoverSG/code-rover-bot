@@ -154,7 +154,7 @@ async function setMode(inputText: string): Promise<Mode | null> {
     ? AgentType.GithubApp
     : AgentType.GithubAction;
 
-  const botPattern = new RegExp(`^${botMention}\\s+(\\w+)$`);
+  const botPattern = new RegExp(`^${botMention}\\s+([\\w-]+)$`);
 
   const match = inputText.trim().match(botPattern);
 
