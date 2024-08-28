@@ -14,9 +14,9 @@ export async function openPR(
   const repoShortName = repoName.split("/")[1];
 
   const { data: comments } = await context.octokit.rest.issues.listComments({
-    ownerName,
-    repoShortName,
-    issueId,
+    owner: ownerName,
+    repo: repoShortName,
+    issue_number: issueId,
   });
 
   // traverse the issue conversation history to find the latest patch
