@@ -13,4 +13,4 @@ export const AnthropicModels = [
 ];
 
 
-export const defaultModel = "gpt-4o-2024-08-06";
+export const defaultModel = "gpt-4o-2024-05-13";
