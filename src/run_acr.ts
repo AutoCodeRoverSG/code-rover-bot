@@ -230,6 +230,8 @@ export async function runAcrLocal(
     `Running ACR GitHub Action with command: ${cmd_args}, in directory ${acrCodeDir}`
   );
 
+  console.log(`Before running ACR. ANTHROPIC_API_KEY: ${passedAnthropicKey}`);
+
   await runCommandStreaming("python", cmd_args, acrCodeDir, {
     PYTHONPATH: acrCodeDir,
     OPENAI_KEY: passedOpenaiKey,
