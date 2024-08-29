@@ -29,8 +29,6 @@ export const dummyAcrResult: AcrResult = {
 
 const dockerImageName = "autocoderover/acr:v1";
 
-const OPENAI_KEY = "OPENAI_API_KEY";
-
 let docker = new Docker();
 
 export async function hasAcrImage(): Promise<boolean> {
@@ -199,7 +197,12 @@ export async function runAcrLocal(
 
   // NOTE: the environment variables must be set in the GitHub action
   const acrCodeDir = process.env.ACR_PATH!;
-  const passedOpenaiKey = process.env.OPENAI_API_KEY!;
+  const passedOpenaiKey = process.env.OPENAI_API_KEY
+    ? process.env.OPENAI_API_KEY
+    : "";
+  const passedAnthropicKey = process.env.ANTHROPIC_API_KEY
+    ? process.env.ANTHROPIC_API_KEY
+    : "";
   const targetRepoPath = process.env.TARGET_REPO_PATH!;
 
   // write the issue text to a file
@@ -230,6 +233,7 @@ export async function runAcrLocal(
   await runCommandStreaming("python", cmd_args, acrCodeDir, {
     PYTHONPATH: acrCodeDir,
     OPENAI_KEY: passedOpenaiKey,
+    ANTHROPIC_API_KEY: passedAnthropicKey,
   });
 
   return readAcrOutput(localAcrOutputDir, taskId, selectedModel);
@@ -258,6 +262,13 @@ export async function runAcrDocker(
   const dockerOutputDir = `/tmp/acr_output`;
 
   const containerName = `acr-${taskId}`;
+
+  const passedOpenaiKey = process.env.OPENAI_API_KEY
+    ? process.env.OPENAI_API_KEY
+    : "";
+  const passedAnthropicKey = process.env.ANTHROPIC_API_KEY
+    ? process.env.ANTHROPIC_API_KEY
+    : "";
 
   const cmd = [
     "conda",
@@ -291,7 +302,11 @@ export async function runAcrDocker(
     HostConfig: {
       Binds: [`${localAcrOutputDir}:${dockerOutputDir}`],
     },
-    Env: ["PYTHONPATH=.", `OPENAI_KEY=${OPENAI_KEY}`],
+    Env: [
+      "PYTHONPATH=.",
+      `OPENAI_KEY=${passedOpenaiKey}`,
+      `ANTHROPIC_API_KEY=${passedAnthropicKey}`,
+    ],
   });
 
   const output = data[0];
