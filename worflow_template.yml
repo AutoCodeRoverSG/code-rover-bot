@@ -1,8 +1,9 @@
 name: "AutoCodeRover Bot"
 
 permissions:
-  contents: read
   issues: write
+  contents: write # change to `read` if you do not want to use open-pr
+  pull-requests: write # (optional) remove if you do not want to use open-pr
 
 on:
   issue_comment:
@@ -13,7 +14,7 @@ on:
 jobs:
   acr-bot:
     runs-on: ubuntu-latest
-    if: contains(github.event.comment.body || github.event.issue.body, '@acr-bot')
+    if: ${{ contains(github.event.comment.body || github.event.issue.body, '@acr-bot') }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -27,3 +28,4 @@ jobs:
           TARGET_REPO_PATH: ${{ steps.set-var.outputs.GITHUB_WORKSPACE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: $${{ secrets.ANTHROPIC_API_KEY }}
