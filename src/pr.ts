@@ -107,6 +107,8 @@ export async function openPR(
 
   await git.applyPatch(patchFilePath);
 
+  fs.unlinkSync(patchFilePath);
+
   await git.add(".");
   await git.commit(`Patch for issue #${issueId}`);
 

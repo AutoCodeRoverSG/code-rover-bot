@@ -24,3 +24,31 @@ App
 
 - Currently uses AutoCodeRover-v2 () as the backend.
 - Supports Python, Java, and C projects. Experimental support for C++ and Go.
+
+
+
+
+## Create PR extra setup
+
+if dont need PR feature:
+
+```
+permissions:
+  contents: read
+  issues: write
+```
+
+If need:
+
+```
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+```
+
+This is for action.
+
+Or, just turn it on in settings.
+
+Settings -> Action -> Allow GitHub Actions to create and approve pull requests
