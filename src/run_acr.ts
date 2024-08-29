@@ -181,13 +181,9 @@ async function runCommandStreaming(
 export async function runAcrLocal(
   issueId: number,
   issueText: string,
-  repoName: string
+  repoName: string,
+  selectedModel: string
 ): Promise<AcrResult> {
-  // TODO: The issue text does not contain the issue title??
-
-  // TODO: make this a parameter
-  const seletedModel = "gpt-4o-2024-05-13";
-
   console.log("Going to run ACR on the following issue text:");
   console.log(issueText);
 
@@ -212,20 +208,13 @@ export async function runAcrLocal(
 
   console.log(`Wrote issue text to ${issueTextFile}`);
 
-  // const cmd =
-  //   `python app/main.py local-issue ` +
-  //   `--output-dir ${localAcrOutputDir} ` +
-  //   `--model gpt-4o-2024-05-13 ` +
-  //   `--task-id ${taskId} ` +
-  //   `--local-repo ${targetRepoPath} ` +
-  //   `--issue-file ${issueTextFile}`; // --no-print?
   const cmd_args = [
     "app/main.py",
     "local-issue",
     "--output-dir",
     localAcrOutputDir,
     "--model",
-    seletedModel,
+    selectedModel,
     "--task-id",
     taskId,
     "--local-repo",
@@ -243,7 +232,7 @@ export async function runAcrLocal(
     OPENAI_KEY: passedOpenaiKey,
   });
 
-  return readAcrOutput(localAcrOutputDir, taskId, seletedModel);
+  return readAcrOutput(localAcrOutputDir, taskId, selectedModel);
 }
 
 /**
@@ -254,11 +243,9 @@ export async function runAcrDocker(
   issueId: number,
   issueUrl: string,
   repoName: string,
-  repoUrl: string
+  repoUrl: string,
+  selectedModel: string
 ): Promise<AcrResult> {
-  // TODO: make this a parameter
-  const selectedModel = "gpt-4o-2024-05-13";
-
   const modifiedRepoName = repoName.replace("/", "__");
 
   const taskId = `${modifiedRepoName}-${issueId}`;

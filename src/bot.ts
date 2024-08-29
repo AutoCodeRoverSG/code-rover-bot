@@ -13,7 +13,12 @@ import {
   prInstruction,
   successMessagePrefix,
 } from "./constants.js";
-import { AnthropicModels, defaultModel, OpenaiModels } from "./models.js";
+import {
+  AnthropicModels,
+  defaultModel,
+  OpenaiModels,
+  AllModels,
+} from "./models.js";
 import { openPR } from "./pr.js";
 
 enum InstructType {
@@ -47,32 +52,37 @@ async function runAcr(
     return result;
   }
 
-  if (OpenaiModels.includes(mode.modelName!) && !process.env.OPENAI_API_KEY) {
+  if (mode.modelName! in OpenaiModels && !process.env.OPENAI_API_KEY) {
     let result = dummyAcrResult;
     result.result =
       "OpenAI API key is missing. Please set it up in the repository.";
     return result;
   }
 
-  if (
-    AnthropicModels.includes(mode.modelName!) &&
-    !process.env.ANTHROPIC_API_KEY
-  ) {
+  if (mode.modelName! in AnthropicModels && !process.env.ANTHROPIC_API_KEY) {
     let result = dummyAcrResult;
     result.result =
       "Anthropic API key is missing. Please set it up in the repository.";
     return result;
   }
 
+  const selectedModel = AllModels[mode.modelName!];
+
   if (mode.agentType == AgentType.GithubApp) {
     // run ACR in docker mode
-    const result = await runAcrDocker(issueId, issueUrl, repoName, repoUrl);
+    const result = await runAcrDocker(
+      issueId,
+      issueUrl,
+      repoName,
+      repoUrl,
+      selectedModel
+    );
     return result;
   } else {
     // run ACR on on the same machine as this script
     let result;
     try {
-      result = await runAcrLocal(issueId, issueText, repoName);
+      result = await runAcrLocal(issueId, issueText, repoName, selectedModel);
     } catch (error) {
       console.log(error);
       result = dummyAcrResult;
@@ -168,10 +178,7 @@ async function setMode(inputText: string): Promise<Mode | null> {
     const instruction = match[1];
     if (instruction == prInstruction) {
       return { agentType: agentType, instructType: InstructType.PR };
-    } else if (
-      OpenaiModels.includes(instruction) ||
-      AnthropicModels.includes(instruction)
-    ) {
+    } else if (instruction in AllModels) {
       return {
         agentType: agentType,
         instructType: InstructType.Patch,
