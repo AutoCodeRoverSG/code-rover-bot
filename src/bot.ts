@@ -43,7 +43,6 @@ async function runAcr(
   repoName: string,
   repoUrl: string
 ): Promise<AcrResult> {
-  // first check for key
 
   if (mode.modelName == "") {
     let result = dummyAcrResult;

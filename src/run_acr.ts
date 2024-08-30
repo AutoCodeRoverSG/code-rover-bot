@@ -130,6 +130,14 @@ async function runCommandStreaming(
   additionalEnv: any
 ) {
   try {
+
+    // process.env entries which clash with additionalEnv should be removed
+    for (const key in additionalEnv) {
+      if (process.env[key] !== undefined) {
+        delete process.env[key];
+      }
+    }
+
     await new Promise<void>((resolve, reject) => {
       const newProcess = spawn(cmd, args, {
         cwd: cwd,
