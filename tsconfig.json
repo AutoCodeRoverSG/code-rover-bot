@@ -21,5 +21,10 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/"],
+
+  "exclude": [
+      "**/index_github.js"
+  ],
+
   "compileOnSave": false
 }

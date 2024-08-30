@@ -1,6 +1,6 @@
 #!/bin/bash
 
-npm run build-ga-new
+npm run build-ga
 
 git add .
 git commit -m "Update action"
