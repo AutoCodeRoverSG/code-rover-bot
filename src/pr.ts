@@ -95,7 +95,10 @@ export async function openPR(
 
   const currentBranch = (await git.status()).current;
 
-  const newBranch = `acr-bot-patch-${issueId}`;
+  // get time in the format of YYYYMMDD T HHmmss
+  const timeStr = new Date().toISOString().replace(/[-:]/g, "").split(".")[0];
+
+  const newBranch = `acr-bot-patch-${issueId}-${timeStr}`;
 
   await git.checkoutLocalBranch(newBranch);
 
