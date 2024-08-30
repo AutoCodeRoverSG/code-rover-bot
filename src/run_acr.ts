@@ -138,13 +138,6 @@ async function runCommandStreaming(
       }
     }
 
-    const completeEnv = {
-      ...process.env,
-      ...additionalEnv,
-    };
-
-    console.log(`Environment variables: ${JSON.stringify(completeEnv)}`);
-
     await new Promise<void>((resolve, reject) => {
       const newProcess = spawn(cmd, args, {
         cwd: cwd,
