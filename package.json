@@ -12,20 +12,18 @@
     "probot-app"
   ],
   "scripts": {
+    "build": "tsc",
+    "start": "node ./lib/index.js",
     "build-ga": "node build_ga.js",
     "start-ga": "node dist/index.js",
-    "build": "tsc",
-    "start": "probot run ./lib/index.js",
     "test": "vitest"
   },
   "dependencies": {
     "@probot/adapter-github-actions": "^4.0.0",
-    "@vercel/ncc": "^0.38.1",
     "dockerode": "^4.0.2",
     "glob": "^11.0.0",
     "node-fetch": "^3.3.2",
     "probot": "^13.0.1",
-    "probot-commands": "^1.1.0",
     "simple-git": "^3.25.0"
   },
   "devDependencies": {

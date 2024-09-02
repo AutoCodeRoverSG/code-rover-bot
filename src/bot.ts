@@ -274,6 +274,8 @@ export const robot = (app: Probot) => {
     const commentText = context.payload.comment.body;
     app.log.info(commentText);
 
+    // console.log(context);
+
     if (commentText == null) {
       return;
     }

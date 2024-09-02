@@ -35,6 +35,7 @@ export async function hasAcrImage(): Promise<boolean> {
   let images = await docker.listImages({
     filters: { reference: [dockerImageName] },
   });
+  // console.log(images);
   return images.length > 0;
 }
 

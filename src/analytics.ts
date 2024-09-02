@@ -1,3 +1,4 @@
+import { Agent as HttpsAgent } from "https";
 import fetch from "node-fetch";
 
 const ENDPOINT = "https://app.autocoderover.dev/usage/new";
@@ -62,13 +63,12 @@ export async function recordInvocation(
         "Content-Type": "multipart/form-data",
       },
       body: JSON.stringify(data),
-      agent: new (require("https").Agent)({ rejectUnauthorized: false }),
+      agent: new HttpsAgent({ rejectUnauthorized: false }),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
   } catch (error) {
     console.error("Error when recording usage stats: ", error);
   }
