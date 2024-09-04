@@ -95,10 +95,9 @@ export async function openPR(
 
   const currentBranch = (await git.status()).current;
 
-  // get time in the format of YYYYMMDD T HHmmss
-  const timeStr = new Date().toISOString().replace(/[-:]/g, "").split(".")[0];
+  const timeStr = getFormattedTime();
 
-  const newBranch = `acr-bot-patch-${issueId}-${timeStr}`;
+  const newBranch = `AutoCodeRover-#${issueId}-${timeStr}`;
 
   await git.checkoutLocalBranch(newBranch);
 
@@ -119,9 +118,9 @@ export async function openPR(
 
   // create a PR
 
-  const prTitle = `Patch for issue #${issueId} - ${issueTitle}`;
+  const prTitle = `Fix #${issueId} (AutoCodeRover)`;
 
-  const prBody = `This PR contains a patch for issue #${issueId}. Patch is create by AutoCodeRover.`;
+  const prBody = `This PR contains a patch for issue #${issueId}. Patch was created by AutoCodeRover.`;
 
   await context.octokit.pulls.create({
     owner: context.payload.repository.owner.login,
@@ -133,4 +132,19 @@ export async function openPR(
   });
 
   console.log("PR created successfully");
+}
+
+function getFormattedTime() {
+  // get time in the format of YYYYMMDD_HH_mm_ss
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(now.getDate()).padStart(2, '0');
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  return `${year}${month}${day}_${hours}_${minutes}_${seconds}`;
 }
