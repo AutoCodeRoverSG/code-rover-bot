@@ -112,7 +112,7 @@ export async function openPR(
   fs.unlinkSync(patchFilePath);
 
   await git.add(".");
-  await git.commit(`Patch for issue #${issueId}`);
+  await git.commit(`Fix #${issueId}`);
 
   await git.push("origin", newBranch);
 
