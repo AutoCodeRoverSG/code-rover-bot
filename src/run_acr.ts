@@ -89,13 +89,17 @@ function readAcrOutput(
   // read cost
   const [cost, inputTokens, outputTokens] = readResultMeta(realOutputDir);
 
-  if (!fs.existsSync(patch_path)) {
-    const errorMsg = `PatchGenError: No patch found in ${realOutputDir}`;
-    console.error(errorMsg);
+  if (fs.existsSync(patch_path)) {
+    let patch = fs.readFileSync(patch_path, "utf-8");
+    // console.log(patch);
+    if (!patch.startsWith("```")) {
+      patch = "```diff\n" + patch + "\n```";
+    }
+
     return {
-      run_ok: false,
-      result: failureIssueComment,
-      additional_info: errorMsg,
+      run_ok: true,
+      result: patch,
+      additional_info: null,
       model: modelName,
       cost: cost,
       input_tokens: inputTokens,
@@ -103,22 +107,38 @@ function readAcrOutput(
     };
   }
 
-  let patch = fs.readFileSync(patch_path, "utf-8");
-  // console.log(patch);
-  if (!patch.startsWith("```")) {
-    patch = "```diff\n" + patch + "\n```";
+  const fix_locations = path.join(realOutputDir, "fix_locations.json");
+  if (fs.existsSync(fix_locations)) {
+    const fixLocations: string[] = JSON.parse(fs.readFileSync(fix_locations, "utf-8"));
+    const fixLocationsList = fixLocations.map(x => {
+      const fields = JSON.parse(x);
+      return `* File: ${fields['file']}, class: ${fields['class']}, method: ${fields['method']}`;
+    }).join('\n');
+    return {
+      run_ok: true,
+      result: "I could not generate a patch for this issue. Here are locations I have explored: " + fixLocationsList,
+      additional_info: null,
+      model: modelName,
+      cost: cost,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+    };
   }
 
+  const errorMsg = `PatchGenError: No patch and error locations found in ${realOutputDir}`;
+  console.error(errorMsg);
   return {
-    run_ok: true,
-    result: patch,
-    additional_info: null,
+    run_ok: false,
+    result: failureIssueComment,
+    additional_info: errorMsg,
     model: modelName,
     cost: cost,
     input_tokens: inputTokens,
     output_tokens: outputTokens,
   };
+
 }
+
 
 /**
  * Run a command in the local environment and stream its output.

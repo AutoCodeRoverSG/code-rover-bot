@@ -302,6 +302,20 @@ export const robot = (app: Probot) => {
       return;
     }
 
+    const comments = await context.octokit.issues.listComments();
+
+    comments.data.forEach(x => {
+      console.log(x.user);
+      console.log(x.body_text);
+      if(!x.user ||  x.user.login == "acr-bot") {
+        return;
+      }
+      if(!x.body_text || x.body_text?.includes(botMention)) {
+        return;
+      }
+      console.log(x.body_text);
+    })
+
     console.log(`mode.agentType: ${mode.agentType}`);
     console.log(`mode.instructType: ${mode.instructType}`);
     console.log(`mode.modelName: ${mode.modelName}`);
