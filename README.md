@@ -1,5 +1,15 @@
 # AutoCodeRover GitHub Bot
 
+## Set up as GitHub App
+
+1. Go to [this link](https://github.com/organizations/AutoCodeRoverSG/settings/apps/code-rover-bot/installations) and install code-rover-bot App in your repository. Note that this link should be changed to a marketplace link once the App is published.
+
+2. Set `OPENAI_API_KEY` in your repository. This should set in `Settings -> Secrets and variables -> Actions`. In `Repository variables`, create a new variable with name `OPENAI_API_KEY` whose value is your own key.
+  - If you want to use the Anthropic models, set `ANTHROPIC_API_KEY` with similar steps.
+
+> [!NOTE]
+> For GitHub App, you should set your keys in Repository **variables**.
+
 ## Set up as GitHub Action
 
 1. In your repository, create a new workflow file (e.g. `acr_bot.yml`) in `.github/workflows/`. Then, copy the content of `workflow_template.yml` in this repository to your newly created workflow file.
@@ -7,6 +17,8 @@
 2. Set `OPENAI_API_KEY` in your repository. This should set in `Settings -> Secrets and variables -> Actions`. In `Repository secrets`, create a new secret with name `OPENAI_API_KEY` whose value is your own key.
   - If you want to use the Anthropic models, set `ANTHROPIC_API_KEY` with similar steps.
 
+> [!NOTE]
+> For GitHub Action, you should set your keys in Repository **secrets**.
 
 ## Running the bot
 
@@ -45,20 +57,20 @@ NOTE:
 After you make a new comment under an issue with `@acr-bot ...`, you can go to the `Actions` tab in your repository and see the bot being executed in real-time. In Patch mode, you can also see the process of running AutoCodeRover being streamed to the workflow run output.
 
 
-## Set up as GitHub App
+## GitHub App vs. GitHub Action
 
-
-Action
+### Action
 
 - Takes longer since dependencies need to be installed each time.
 - Currently uses AutoCodeRover-v1 (20240408) as the backend.
 - Supports Python projects.
+- OpenAI/Anthropic token can be set as repository secrets.
 
-App
+#### App
 
-- Currently uses AutoCodeRover-v2 () as the backend.
+- Can use AutoCodeRover-v2 as the backend.
 - Supports Python, Java, and C projects. Experimental support for C++ and Go.
-
+- OpenAI/Anthropic token need to be set as repository variables, since GitHub App has no access to secrets.
 
 
 
@@ -86,3 +98,12 @@ This is for action.
 Or, just turn it on in settings.
 
 Settings -> Action -> Allow GitHub Actions to create and approve pull requests
+
+
+## Setting up GitHub App server
+
+```
+npm install
+npm run build
+npm start
+```
