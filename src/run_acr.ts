@@ -27,7 +27,7 @@ export const dummyAcrResult: AcrResult = {
   output_tokens: null,
 };
 
-const dockerImageName = "autocoderover/acr:v1";
+const dockerImageName = "autocoderover/acr:v1.0.0";
 
 let docker = new Docker();
 
@@ -35,7 +35,6 @@ export async function hasAcrImage(): Promise<boolean> {
   let images = await docker.listImages({
     filters: { reference: [dockerImageName] },
   });
-  // console.log(images);
   return images.length > 0;
 }
 
@@ -109,14 +108,20 @@ function readAcrOutput(
 
   const fix_locations = path.join(realOutputDir, "fix_locations.json");
   if (fs.existsSync(fix_locations)) {
-    const fixLocations: string[] = JSON.parse(fs.readFileSync(fix_locations, "utf-8"));
-    const fixLocationsList = fixLocations.map(x => {
-      const fields = JSON.parse(x);
-      return `* File: ${fields['file']}, class: ${fields['class']}, method: ${fields['method']}`;
-    }).join('\n');
+    const fixLocations: string[] = JSON.parse(
+      fs.readFileSync(fix_locations, "utf-8")
+    );
+    const fixLocationsList = fixLocations
+      .map((x) => {
+        const fields = JSON.parse(x);
+        return `* File: ${fields["file"]}, class: ${fields["class"]}, method: ${fields["method"]}`;
+      })
+      .join("\n");
     return {
       run_ok: true,
-      result: "I could not generate a patch for this issue. Here are locations I have explored: " + fixLocationsList,
+      result:
+        "I could not generate a patch for this issue. Here are locations I have explored: " +
+        fixLocationsList,
       additional_info: null,
       model: modelName,
       cost: cost,
@@ -136,9 +141,7 @@ function readAcrOutput(
     input_tokens: inputTokens,
     output_tokens: outputTokens,
   };
-
 }
-
 
 /**
  * Run a command in the local environment and stream its output.
@@ -151,7 +154,6 @@ async function runCommandStreaming(
   additionalEnv: any
 ) {
   try {
-
     // process.env entries which clash with additionalEnv should be removed
     for (const key in additionalEnv) {
       if (process.env[key] !== undefined) {
@@ -209,7 +211,9 @@ export async function runAcrLocal(
   issueId: number,
   issueText: string,
   repoName: string,
-  selectedModel: string
+  selectedModel: string,
+  openaiKey: string,
+  anthropicKey: string
 ): Promise<AcrResult> {
   console.log("Going to run ACR on the following issue text:");
   console.log(issueText);
@@ -226,12 +230,6 @@ export async function runAcrLocal(
 
   // NOTE: the environment variables must be set in the GitHub action
   const acrCodeDir = process.env.ACR_PATH!;
-  const passedOpenaiKey = process.env.OPENAI_API_KEY
-    ? process.env.OPENAI_API_KEY
-    : "";
-  const passedAnthropicKey = process.env.ANTHROPIC_API_KEY
-    ? process.env.ANTHROPIC_API_KEY
-    : "";
   const targetRepoPath = process.env.TARGET_REPO_PATH!;
 
   // write the issue text to a file
@@ -259,12 +257,10 @@ export async function runAcrLocal(
     `Running ACR GitHub Action with command: ${cmd_args}, in directory ${acrCodeDir}`
   );
 
-  console.log(`Before running ACR. ANTHROPIC_API_KEY: ${passedAnthropicKey}`);
-
   await runCommandStreaming("python", cmd_args, acrCodeDir, {
     PYTHONPATH: acrCodeDir,
-    OPENAI_KEY: passedOpenaiKey,
-    ANTHROPIC_API_KEY: passedAnthropicKey,
+    OPENAI_KEY: openaiKey,
+    ANTHROPIC_API_KEY: anthropicKey,
   });
 
   return readAcrOutput(localAcrOutputDir, taskId, selectedModel);
@@ -279,7 +275,9 @@ export async function runAcrDocker(
   issueUrl: string,
   repoName: string,
   repoUrl: string,
-  selectedModel: string
+  selectedModel: string,
+  openaiKey: string,
+  anthropicKey: string
 ): Promise<AcrResult> {
   const modifiedRepoName = repoName.replace("/", "__");
 
@@ -293,13 +291,6 @@ export async function runAcrDocker(
   const dockerOutputDir = `/tmp/acr_output`;
 
   const containerName = `acr-${taskId}`;
-
-  const passedOpenaiKey = process.env.OPENAI_API_KEY
-    ? process.env.OPENAI_API_KEY
-    : "";
-  const passedAnthropicKey = process.env.ANTHROPIC_API_KEY
-    ? process.env.ANTHROPIC_API_KEY
-    : "";
 
   const cmd = [
     "conda",
@@ -321,9 +312,11 @@ export async function runAcrDocker(
     repoUrl,
     "--issue-link",
     issueUrl,
-    "--no-print",
+    // "--no-print",
     // omit commit hash -> default branch HEAD will be used
   ];
+
+  console.log(`Start running ACR in Docker container with command: ${cmd}`);
 
   const data = await docker.run(dockerImageName, cmd, process.stdout, {
     name: containerName,
@@ -335,8 +328,8 @@ export async function runAcrDocker(
     },
     Env: [
       "PYTHONPATH=.",
-      `OPENAI_KEY=${passedOpenaiKey}`,
-      `ANTHROPIC_API_KEY=${passedAnthropicKey}`,
+      `OPENAI_KEY=${openaiKey}`,
+      `ANTHROPIC_API_KEY=${anthropicKey}`,
     ],
   });
 

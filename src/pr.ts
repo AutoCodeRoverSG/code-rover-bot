@@ -1,21 +1,33 @@
-import { simpleGit } from "simple-git";
+import { simpleGit, SimpleGitOptions } from "simple-git";
 import { botMention, successMessagePrefix } from "./constants.js";
+import { AgentType, Mode } from "./types.js";
 
 import fs from "fs";
 
+/**
+ * SPECIFIC for GitHub App: we need a token to push changes to repo.
+ */
+async function getInstallationAccessToken(context: any) {
+  const { token } = await context.octokit.auth({
+    type: "installation",
+  });
+
+  return token;
+}
+
 export async function openPR(
   context: any,
+  mode: Mode,
   issueId: number,
   issueTitle: string,
   repoName: string,
-  ownerName: string
+  repoOwner: string
 ) {
   // retrieve all comments from the issue
-
   const repoShortName = repoName.split("/")[1];
 
   const { data: comments } = await context.octokit.rest.issues.listComments({
-    owner: ownerName,
+    owner: repoOwner,
     repo: repoShortName,
     issue_number: issueId,
     per_page: 100,
@@ -25,11 +37,9 @@ export async function openPR(
 
   let lastCommentWithPatch = "";
 
-  console.log(`comments: ${comments}`);
-
   comments.forEach((comment: any) => {
-    console.log(comment.user.type);
-    console.log(comment.body);
+    // console.log(comment.user.type);
+    // console.log(comment.body);
 
     if (comment.user.type == "Bot") {
       // bot created comment - let's see whether a patch is contained.
@@ -86,7 +96,26 @@ export async function openPR(
   // only trim leading spaces and new lines
   patchContent = patchContent.replace(/^\s+/g, "");
 
-  const targetRepoDir = process.env.TARGET_REPO_PATH!;
+  let targetRepoDir = "";
+
+  // setup the target repo, depending on whether we are in App or Action mode
+  if (mode.agentType == AgentType.GithubApp) {
+    // setup a local copy of the source code directory
+    const sourceRepoUrl = context.payload.repository.clone_url;
+    targetRepoDir = `/tmp/${repoOwner}_${repoShortName}_${issueId}`;
+    if (fs.existsSync(targetRepoDir)) {
+      fs.rmdirSync(targetRepoDir, { recursive: true });
+    }
+    await simpleGit().clone(sourceRepoUrl, targetRepoDir);
+  } else {
+    // GithubAction
+    targetRepoDir = process.env.TARGET_REPO_PATH!;
+  }
+
+  // cd to the target repo
+  const originalWorkingDir = process.cwd();
+
+  process.chdir(targetRepoDir);
 
   const git = simpleGit(targetRepoDir);
 
@@ -114,10 +143,17 @@ export async function openPR(
   await git.add(".");
   await git.commit(`Fix #${issueId}`);
 
-  await git.push("origin", newBranch);
+  // push changes to remote
+  if (mode.agentType == AgentType.GithubApp) {
+    const token = await getInstallationAccessToken(context);
+    const pushUrl = `https://x-access-token:${token}@github.com/${repoOwner}/${repoShortName}.git`;
+    await git.addRemote("pushRemote", pushUrl);
+    await git.push("pushRemote", newBranch);
+  } else {
+    await git.push("origin", newBranch);
+  }
 
   // create a PR
-
   const prTitle = `Fix #${issueId} (AutoCodeRover)`;
 
   const prBody = `This PR contains a patch for issue #${issueId}. Patch was created by AutoCodeRover.`;
@@ -132,6 +168,13 @@ export async function openPR(
   });
 
   console.log("PR created successfully");
+
+  // clean up
+  process.chdir(originalWorkingDir);
+
+  if (mode.agentType == AgentType.GithubApp) {
+    fs.rmdirSync(targetRepoDir, { recursive: true });
+  }
 }
 
 function getFormattedTime() {
@@ -139,12 +182,12 @@ function getFormattedTime() {
   const now = new Date();
 
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const day = String(now.getDate()).padStart(2, "0");
 
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
 
   return `${year}${month}${day}_${hours}_${minutes}_${seconds}`;
 }

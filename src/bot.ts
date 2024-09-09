@@ -1,5 +1,5 @@
 import { Probot } from "probot";
-import { AgentType, recordInvocation } from "./analytics.js";
+import { recordInvocation } from "./analytics.js";
 import {
   AcrResult,
   dummyAcrResult,
@@ -13,36 +13,80 @@ import {
   prInstruction,
   successMessagePrefix,
 } from "./constants.js";
+
 import {
+  AllModels,
   AnthropicModels,
   defaultModel,
   OpenaiModels,
-  AllModels,
 } from "./models.js";
 import { openPR } from "./pr.js";
 
-enum InstructType {
-  PR = "pr",
-  Patch = "patch",
+import { AgentType, InstructType, Mode } from "./types.js";
+
+async function queryRepoVariable(
+  context: any,
+  repoOwner: string,
+  repoShortName: string,
+  varName: string
+): Promise<string | null> {
+  const { data } = (await context.octokit.request(
+    "GET /repos/{owner}/{repo}/actions/variables/{name}",
+    {
+      owner: repoOwner,
+      repo: repoShortName,
+      name: varName,
+    }
+  )) as any;
+
+  if (!data?.value) {
+    return null;
+  }
+  return data.value;
 }
 
-type Mode = {
-  agentType: AgentType;
-  instructType: InstructType;
-  modelName?: string; // undefined if in PR mode
-};
+async function queryOpenaiKey(
+  context: any,
+  repoOwner: string,
+  repoShortName: string
+): Promise<string | null> {
+  return await queryRepoVariable(
+    context,
+    repoOwner,
+    repoShortName,
+    "OPENAI_API_KEY"
+  );
+}
+
+async function queryAnthropicKey(
+  context: any,
+  repoOwner: string,
+  repoShortName: string
+): Promise<string | null> {
+  console.log("querying anthropic key");
+  return await queryRepoVariable(
+    context,
+    repoOwner,
+    repoShortName,
+    "ANTHROPIC_API_KEY"
+  );
+}
 
 /**
  * Wrapper to decide which ACR mode to dispatch.
  */
 async function runAcr(
+  context: any,
   mode: Mode,
   issueId: number,
   issueUrl: string,
   issueText: string,
+  repoOwner: string,
   repoName: string,
   repoUrl: string
 ): Promise<AcrResult> {
+  // If mode is App, we need to send another request to retrieve the keys
+  const repoShortName = repoName.split("/")[1];
 
   if (mode.modelName == "") {
     let result = dummyAcrResult;
@@ -51,20 +95,45 @@ async function runAcr(
     return result;
   }
 
-  if (mode.modelName! in OpenaiModels && !process.env.OPENAI_API_KEY) {
-    let result = dummyAcrResult;
-    result.result =
-      "OpenAI API key is missing. Please set it up in the repository.";
-    return result;
+  let openaiKey = "";
+  let anthropicKey = "";
+
+  if (mode.modelName! in OpenaiModels) {
+    // user has requested for an OpenAI model
+    if (mode.agentType == AgentType.GithubApp) {
+      openaiKey =
+        (await queryOpenaiKey(context, repoOwner, repoShortName)) ?? "";
+    } else {
+      // AgentType.GithubAction
+      openaiKey = process.env.OPENAI_API_KEY ?? "";
+    }
+
+    if (openaiKey == "") {
+      let result = dummyAcrResult;
+      result.result =
+        "OpenAI API key is missing. Please set it up in the repository.";
+      return result;
+    }
   }
 
-  if (mode.modelName! in AnthropicModels && !process.env.ANTHROPIC_API_KEY) {
-    let result = dummyAcrResult;
-    result.result =
-      "Anthropic API key is missing. Please set it up in the repository.";
-    return result;
+  if (mode.modelName! in AnthropicModels) {
+    // user has requested for an Anthropic model
+    if (mode.agentType == AgentType.GithubApp) {
+      anthropicKey =
+        (await queryAnthropicKey(context, repoOwner, repoShortName)) ?? "";
+    } else {
+      // AgentType.GithubAction
+      anthropicKey = process.env.ANTHROPIC_API_KEY ?? "";
+    }
+
+    if (anthropicKey == "") {
+      let result = dummyAcrResult;
+      result.result =
+        "Anthropic API key is missing. Please set it up in the repository.";
+      return result;
+    }
   }
-  
+
 
   const selectedModel = AllModels[mode.modelName!];
 
@@ -75,14 +144,23 @@ async function runAcr(
       issueUrl,
       repoName,
       repoUrl,
-      selectedModel
+      selectedModel,
+      openaiKey,
+      anthropicKey
     );
     return result;
   } else {
     // run ACR on on the same machine as this script
     let result;
     try {
-      result = await runAcrLocal(issueId, issueText, repoName, selectedModel);
+      result = await runAcrLocal(
+        issueId,
+        issueText,
+        repoName,
+        selectedModel,
+        openaiKey,
+        anthropicKey
+      );
     } catch (error) {
       console.log(error);
       result = dummyAcrResult;
@@ -98,6 +176,7 @@ async function resolveIssue(
   issueUrl: string,
   issueTitle: string,
   issueFullText: string,
+  repoOwner: string,
   repoName: string,
   repoUrl: string
 ) {
@@ -105,10 +184,12 @@ async function resolveIssue(
   const startTime = new Date();
 
   const acrResult = await runAcr(
+    context,
     mode,
     issueId,
     issueUrl,
     issueFullText,
+    repoOwner,
     repoName,
     repoUrl
   );
@@ -221,28 +302,26 @@ async function dispatchWithMode(mode: Mode, context: any) {
   const issueUrl = context.payload.issue.html_url;
   const repoUrl = context.payload.repository.clone_url;
   const repoName = context.payload.repository.full_name;
-  const ownerName = context.payload.repository.owner.login;
+  const repoOwner = context.payload.repository.owner.login;
+
   let issueFullText = issueTitle + "\n" + issueText;
   const repoShortName = repoName.split("/")[1];
 
-
   const { data: comments } = await context.octokit.rest.issues.listComments({
-    owner: ownerName,
+    owner: repoOwner,
     repo: repoShortName,
     issue_number: issueId,
     per_page: 100
   });
   comments.forEach(comment => {
-    if (!comment.user 
-      || comment.user.login == "acr-bot" 
+    if (!comment.user
+      || comment.user.login == "acr-bot"
       || comment.user.type == "Bot"
       || !comment.body) {
       return;
     }
     issueFullText += `\n User: ${comment.user.login} \n Comment: ${comment.body}`;
   });
-
-
 
   if (mode.instructType == InstructType.Patch) {
     await resolveIssue(
@@ -252,13 +331,14 @@ async function dispatchWithMode(mode: Mode, context: any) {
       issueUrl,
       issueTitle,
       issueFullText,
+      repoOwner,
       repoName,
       repoUrl
     );
   }
 
   if (mode.instructType == InstructType.PR) {
-    await openPR(context, issueId, issueTitle, repoName, ownerName);
+    await openPR(context, mode, issueId, issueTitle, repoName, repoOwner);
   }
 }
 

@@ -1,12 +1,9 @@
 import { Agent as HttpsAgent } from "https";
 import fetch from "node-fetch";
 
-const ENDPOINT = "https://app.autocoderover.dev/usage/new";
+import { AgentType } from "./types.js";
 
-export enum AgentType {
-  GithubAction = "GitHub Action",
-  GithubApp = "GitHub App",
-}
+const ENDPOINT = "https://app.autocoderover.dev/usage/new";
 
 /**
  * Record invocation of AutoCodeRover bot.
