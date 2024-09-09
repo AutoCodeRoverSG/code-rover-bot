@@ -1,6 +1,6 @@
 # AutoCodeRover GitHub Bot
 
-## Set up as GitHub App
+## Set up as GitHub App (as user)
 
 1. Go to [this link](https://github.com/organizations/AutoCodeRoverSG/settings/apps/code-rover-bot/installations) and install code-rover-bot App in your repository. Note that this link should be changed to a marketplace link once the App is published.
 
@@ -100,7 +100,17 @@ Or, just turn it on in settings.
 Settings -> Action -> Allow GitHub Actions to create and approve pull requests
 
 
-## Setting up GitHub App server
+## Setting up GitHub App server (as developer)
+
+1. Create a `.env` fle containing the four fields in `.env.example`.
+
+2. Go to [this link](https://github.com/organizations/AutoCodeRoverSG/settings/apps/code-rover-bot) to find the value of `APP_ID` and `WEBHOOK_PROXY_URL`.
+
+3. At the same link, create a private key, and use that as the value for `PRIVATE_KEY`.
+
+4. Ask one of the maintainers for `WEBHOOK_SECRET`.
+
+5. Now `.env` file has been correctly configured. Install and start the server:
 
 ```
 npm install
