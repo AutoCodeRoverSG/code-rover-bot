@@ -305,24 +305,29 @@ export const robot = (app: Probot) => {
     }
 
 
-    context.octokit.request('GET /repos/{owner}/{repo}/issues/{issue_number}/comments', {
-      owner: context.payload.repository.owner.login,
-      repo: context.payload.repository.name,
-      issue_number: context.payload.issue.number
-    }).then((response) => {
-      response.data.forEach(x => {
-        console.log("user: ", x.user);
-        console.log("body: ", x.body);
-        console.log("body_test: ", x.body_text);
-        console.log("body_html: ", x.body_html);
-        if (!x.user || x.user.login == "acr-bot") {
-          return;
-        }
-        if (!x.body || x.body?.includes(botMention)) {
-          return;
-        }
-        console.log(x.body);
-      });
+    const issueTitle = context.payload.issue.title;
+    const issueFullText = issueTitle + "\n" + issueText;
+
+    const issueId = context.payload.issue.number;
+    const repoName = context.payload.repository.full_name;
+  
+    const ownerName = context.payload.repository.owner.login;
+    const repoShortName = repoName.split("/")[1];
+
+    const { data: comments } = await context.octokit.rest.issues.listComments({
+      owner: ownerName,
+      repo: repoShortName,
+      issue_number: issueId,
+      per_page: 100
+    });
+    comments.forEach(x => {
+      if (!x.user || x.user.login == "acr-bot" || x.user.type == "Bot") {
+        return;
+      }
+      if (!x.body || x.body?.includes(botMention)) {
+        return;
+      }
+      console.log("FOR BODY: ", x.body);
     });
     // const comments = await context.octokit.issues.listComments();
 
