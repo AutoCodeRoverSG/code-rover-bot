@@ -304,6 +304,26 @@ export const robot = (app: Probot) => {
       return;
     }
 
+
+    context.octokit.request('GET /repos/{owner}/{repo}/issues/{issue_number}/comments', {
+      owner: context.payload.repository.owner.login,
+      repo: context.payload.repository.name,
+      issue_number: context.payload.issue.number
+    }).then((response) => {
+      response.data.forEach(x => {
+        console.log("user: ", x.user);
+        console.log("body: ", x.body);
+        console.log("body_test: ", x.body_text);
+        console.log("body_html: ", x.body_html);
+        if (!x.user || x.user.login == "acr-bot") {
+          return;
+        }
+        if (!x.body || x.body?.includes(botMention)) {
+          return;
+        }
+        console.log(x.body);
+      });
+    });
     // const comments = await context.octokit.issues.listComments();
 
     // comments.data.forEach(x => {
