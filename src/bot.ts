@@ -134,7 +134,6 @@ async function runAcr(
     }
   }
 
-
   const selectedModel = AllModels[mode.modelName!];
 
   if (mode.agentType == AgentType.GithubApp) {
@@ -311,13 +310,16 @@ async function dispatchWithMode(mode: Mode, context: any) {
     owner: repoOwner,
     repo: repoShortName,
     issue_number: issueId,
-    per_page: 100
+    per_page: 100,
   });
-  comments.forEach(comment => {
-    if (!comment.user
-      || comment.user.login == "acr-bot"
-      || comment.user.type == "Bot"
-      || !comment.body) {
+
+  comments.forEach((comment: any) => {
+    if (
+      !comment.user ||
+      comment.user.login == "acr-bot" ||
+      comment.user.type == "Bot" ||
+      !comment.body
+    ) {
       return;
     }
     issueFullText += `\n User: ${comment.user.login} \n Comment: ${comment.body}`;
