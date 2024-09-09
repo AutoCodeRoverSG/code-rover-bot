@@ -157,6 +157,8 @@ async function resolveIssue(
     acrResult.result
   );
 
+  //Octokit read metadata and get OPENAI_API_KEY
+
   await context.octokit.issues.createComment(resultComment);
 }
 
