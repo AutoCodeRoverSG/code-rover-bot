@@ -239,7 +239,7 @@ async function dispatchWithMode(mode: Mode, context: any) {
       || !comment.body) {
       return;
     }
-    issueFullText += "\n" + comment.body;
+    issueFullText += `\n User: ${comment.user.login} \n Comment: ${comment.body}`;
   });
 
 
