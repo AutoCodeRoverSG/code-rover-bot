@@ -64,6 +64,7 @@ async function runAcr(
       "Anthropic API key is missing. Please set it up in the repository.";
     return result;
   }
+  
 
   const selectedModel = AllModels[mode.modelName!];
 
@@ -216,16 +217,32 @@ function helpMessage(): string {
 async function dispatchWithMode(mode: Mode, context: any) {
   const issueTitle = context.payload.issue.title;
   const issueText = context.payload.issue.body;
-
-  const issueFullText = issueTitle + "\n" + issueText;
-
   const issueId = context.payload.issue.number;
   const issueUrl = context.payload.issue.html_url;
-
   const repoUrl = context.payload.repository.clone_url;
   const repoName = context.payload.repository.full_name;
-
   const ownerName = context.payload.repository.owner.login;
+  let issueFullText = issueTitle + "\n" + issueText;
+  const repoShortName = repoName.split("/")[1];
+
+
+  const { data: comments } = await context.octokit.rest.issues.listComments({
+    owner: ownerName,
+    repo: repoShortName,
+    issue_number: issueId,
+    per_page: 100
+  });
+  comments.forEach(comment => {
+    if (!comment.user 
+      || comment.user.login == "acr-bot" 
+      || comment.user.type == "Bot"
+      || !comment.body) {
+      return;
+    }
+    issueFullText += "\n" + comment.body;
+  });
+
+
 
   if (mode.instructType == InstructType.Patch) {
     await resolveIssue(
@@ -303,45 +320,6 @@ export const robot = (app: Probot) => {
       );
       return;
     }
-
-
-    const issueTitle = context.payload.issue.title;
-    const issueFullText = issueTitle + "\n" + issueText;
-
-    const issueId = context.payload.issue.number;
-    const repoName = context.payload.repository.full_name;
-  
-    const ownerName = context.payload.repository.owner.login;
-    const repoShortName = repoName.split("/")[1];
-
-    const { data: comments } = await context.octokit.rest.issues.listComments({
-      owner: ownerName,
-      repo: repoShortName,
-      issue_number: issueId,
-      per_page: 100
-    });
-    comments.forEach(x => {
-      if (!x.user || x.user.login == "acr-bot" || x.user.type == "Bot") {
-        return;
-      }
-      if (!x.body || x.body?.includes(botMention)) {
-        return;
-      }
-      console.log("FOR BODY: ", x.body);
-    });
-    // const comments = await context.octokit.issues.listComments();
-
-    // comments.data.forEach(x => {
-    //   console.log(x.user);
-    //   console.log(x.body_text);
-    //   if(!x.user ||  x.user.login == "acr-bot") {
-    //     return;
-    //   }
-    //   if(!x.body_text || x.body_text?.includes(botMention)) {
-    //     return;
-    //   }
-    //   console.log(x.body_text);
-    // })
 
     console.log(`mode.agentType: ${mode.agentType}`);
     console.log(`mode.instructType: ${mode.instructType}`);
