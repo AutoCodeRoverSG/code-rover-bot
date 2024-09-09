@@ -112,6 +112,8 @@ Settings -> Action -> Allow GitHub Actions to create and approve pull requests
 
 5. Now `.env` file has been correctly configured. Install and start the server:
 
+6. Pull the Docker image `autocoderover/acr:v1.0.0`
+
 ```
 npm install
 npm run build
