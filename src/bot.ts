@@ -17,7 +17,6 @@ import {
 import {
   AllModels,
   AnthropicModels,
-  defaultModel,
   OpenaiModels,
 } from "./models.js";
 import { openPR } from "./pr.js";
@@ -275,7 +274,7 @@ async function setMode(inputText: string): Promise<Mode | null> {
     return {
       agentType: agentType,
       instructType: InstructType.Patch,
-      modelName: defaultModel,
+      modelName: "gpt-4o-2024-05-13",
     };
   }
 

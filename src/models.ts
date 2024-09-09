@@ -16,17 +16,3 @@ export const AnthropicModels: Record<string, string> = {
 };
 
 export const AllModels = Object.assign({}, OpenaiModels, AnthropicModels);
-
-function getDefaultModel() {
-  if (process.env.OPENAI_API_KEY) {
-    return "gpt-4o-2024-05-13";
-  }
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    return "claude-3-5-sonnet-20240620";
-  }
-
-  return "";
-}
-
-export const defaultModel = getDefaultModel();
