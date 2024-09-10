@@ -27,7 +27,7 @@ export const dummyAcrResult: AcrResult = {
   output_tokens: null,
 };
 
-const dockerImageName = "autocoderover/acr:v1.0.0";
+const dockerImageName = "autocoderover/acr:v1.1.0";
 
 let docker = new Docker();
 
@@ -312,6 +312,7 @@ export async function runAcrDocker(
     repoUrl,
     "--issue-link",
     issueUrl,
+    "--use-comments"
     // "--no-print",
     // omit commit hash -> default branch HEAD will be used
   ];
