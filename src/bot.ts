@@ -258,7 +258,7 @@ async function getMode(inputText: string): Promise<Mode | null> {
   let needsMatch = true;
   let defaultModel = "gpt-4o-2024-05-13";
 
-  if(agentType == AgentType.GithubAction) {
+  if (agentType == AgentType.GithubAction) {
     defaultModel = process.env.ACR_MODEL ?? "gpt-4o-2024-05-13";
     needsMatch = (!process.env.UNCONSTRAINED_ISSUES || process.env.UNCONSTRAINED_ISSUES != "1");
   }
@@ -273,17 +273,21 @@ async function getMode(inputText: string): Promise<Mode | null> {
         instructType: InstructType.Patch,
         modelName: instruction,
       };
-    } else {
-      // has instruction, but is not a valid instruction
-      return null;
+    } else if (inputText.includes(botMention)) {
+      // does not contain model name => run with default model
+      return {
+        agentType: agentType,
+        instructType: InstructType.Patch,
+        modelName: defaultModel,
+      };
     }
-  } else if (!needsMatch || inputText.includes(botMention)) {
-    // unconstrained mode => run with default model
-    // does not contain model name => run with default model
+  }
+  // unconstrained mode => run with default model    
+  else if (!needsMatch) {
     return {
       agentType: agentType,
       instructType: InstructType.Patch,
-      modelName: "gpt-4o-2024-05-13",
+      modelName: defaultModel,
     };
   }
 
