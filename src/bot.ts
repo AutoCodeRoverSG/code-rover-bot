@@ -255,10 +255,12 @@ async function getMode(inputText: string): Promise<Mode | null> {
 
   const match = inputText.trim().match(botPattern);
 
-  let needsMatch = false;
+  let needsMatch = true;
+  let defaultModel = "gpt-4o-2024-05-13";
 
   if(agentType == AgentType.GithubAction) {
-    needsMatch = (!!process.env.UNCONSTRAINED_ISSUES && process.env.UNCONSTRAINED_ISSUES == "1");
+    defaultModel = process.env.ACR_MODEL ?? "gpt-4o-2024-05-13";
+    needsMatch = (!process.env.UNCONSTRAINED_ISSUES || process.env.UNCONSTRAINED_ISSUES != "1");
   }
 
   if (match) {
@@ -276,6 +278,7 @@ async function getMode(inputText: string): Promise<Mode | null> {
       return null;
     }
   } else if (!needsMatch || inputText.includes(botMention)) {
+    // unconstrained mode => run with default model
     // does not contain model name => run with default model
     return {
       agentType: agentType,
