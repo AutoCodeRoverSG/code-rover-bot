@@ -262,7 +262,7 @@ async function getMode(inputText: string): Promise<Mode | null> {
   }
 
   if (match) {
-    const instruction = match.length > 2 ? match[1] : null;
+    const instruction = match.length > 1 ? match[1] : null;
     if (instruction == prInstruction) {
       return { agentType: agentType, instructType: InstructType.PR };
     } else if (instruction != null && instruction in AllModels) {
