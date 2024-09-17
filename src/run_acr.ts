@@ -27,7 +27,7 @@ export const dummyAcrResult: AcrResult = {
   output_tokens: null,
 };
 
-const dockerImageName = "autocoderover/acr:v1.1.0";
+const dockerImageName = "autocoderover/acr-compiled:v1.0.0";
 
 let docker = new Docker();
 
@@ -62,6 +62,7 @@ function readAcrOutput(
 ): AcrResult {
   // TODO: improve this message to be more user-friendly.
   // We can potentially return the fix locations here.
+  // TODO: do not extract from the first output_dir
   const failureIssueComment = "I could not generate a patch for this issue.";
 
   const realOutputDirs = globSync(`${acrOutputDir}/*`).filter((x) =>
@@ -83,7 +84,7 @@ function readAcrOutput(
 
   // sort them and get last one, since they are sorted by timestamp
   const realOutputDir = realOutputDirs.sort().reverse()[0];
-  const patch_path = path.join(realOutputDir, "final_patch.diff");
+  const patch_path = path.join(realOutputDir, "output_0", "extracted_patch_0.diff");
 
   // read cost
   const [cost, inputTokens, outputTokens] = readResultMeta(realOutputDir);
@@ -298,7 +299,7 @@ export async function runAcrDocker(
     "-n",
     "auto-code-rover",
     "python",
-    "app/main.py",
+    "ACR.py",
     "github-issue",
     "--output-dir",
     dockerOutputDir,
@@ -332,6 +333,7 @@ export async function runAcrDocker(
       `OPENAI_KEY=${openaiKey}`,
       `ANTHROPIC_API_KEY=${anthropicKey}`,
     ],
+    Tty: true,
   });
 
   const output = data[0];
