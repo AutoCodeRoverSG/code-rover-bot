@@ -245,21 +245,27 @@ async function resolveIssue(
 /**
  * Process user input and figure out which mode/model to run.
  */
-async function setMode(inputText: string): Promise<Mode | null> {
+async function getMode(inputText: string): Promise<Mode | null> {
   const hasDockerOnMachine = await hasAcrImage();
   const agentType = hasDockerOnMachine
     ? AgentType.GithubApp
     : AgentType.GithubAction;
 
-  const botPattern = new RegExp(`^${botMention}\\s+([\\w-]+)$`);
+  const botPattern = new RegExp(`^${botMention}\\s*(?:\\s+([\\w-]+))?$`);
 
   const match = inputText.trim().match(botPattern);
 
+  let needsMatch = false;
+
+  if(agentType == AgentType.GithubAction) {
+    needsMatch = (!!process.env.UNCONSTRAINED_ISSUES && process.env.UNCONSTRAINED_ISSUES == "1");
+  }
+
   if (match) {
-    const instruction = match[1];
+    const instruction = match.length > 2 ? match[1] : null;
     if (instruction == prInstruction) {
       return { agentType: agentType, instructType: InstructType.PR };
-    } else if (instruction in AllModels) {
+    } else if (instruction != null && instruction in AllModels) {
       return {
         agentType: agentType,
         instructType: InstructType.Patch,
@@ -269,7 +275,7 @@ async function setMode(inputText: string): Promise<Mode | null> {
       // has instruction, but is not a valid instruction
       return null;
     }
-  } else if (inputText.includes(botMention)) {
+  } else if (!needsMatch || inputText.includes(botMention)) {
     // does not contain model name => run with default model
     return {
       agentType: agentType,
@@ -352,11 +358,7 @@ export const robot = (app: Probot) => {
       return;
     }
 
-    if (!issueText.includes(botMention)) {
-      return;
-    }
-
-    const mode = await setMode(issueText);
+    const mode = await getMode(issueText);
 
     if (mode == null) {
       console.log("Invalid instruction");
@@ -391,7 +393,7 @@ export const robot = (app: Probot) => {
       return;
     }
 
-    const mode = await setMode(commentText);
+    const mode = await getMode(commentText);
 
     if (mode == null) {
       console.log("Invalid instruction");
