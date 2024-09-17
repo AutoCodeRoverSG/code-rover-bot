@@ -240,7 +240,7 @@ export async function runAcrLocal(
   console.log(`Wrote issue text to ${issueTextFile}`);
 
   const cmd_args = [
-    "app/main.py",
+    "ACR.py",
     "local-issue",
     "--output-dir",
     localAcrOutputDir,
