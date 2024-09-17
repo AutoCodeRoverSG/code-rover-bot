@@ -259,6 +259,8 @@ async function getMode(inputText: string): Promise<Mode | null> {
   let defaultModel = "gpt-4o-2024-05-13";
 
   if (agentType == AgentType.GithubAction) {
+    console.log("Running in Github Action mode");
+    console.log(`Value of unconstrained issues is '${process.env.UNCONSTRAINED_ISSUES}'`);
     defaultModel = process.env.ACR_MODEL ?? "gpt-4o-2024-05-13";
     needsMatch = (!process.env.UNCONSTRAINED_ISSUES || process.env.UNCONSTRAINED_ISSUES != "1");
   }
